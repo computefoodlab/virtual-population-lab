@@ -1,0 +1,16 @@
+# Virtual environment
+venv/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+
+# Local working notes and superseded material — not published
+_to_delete/
+

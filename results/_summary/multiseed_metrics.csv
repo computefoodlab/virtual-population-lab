@@ -1,0 +1,91 @@
+dataset,config,engine,metric,mean,std,n,values
+Apple (quality),apple_quality,physics_mc,corr_dist,0.987,0.0591,5,1.0134;0.9558;0.9895;0.9098;1.0665
+Apple (quality),apple_quality,physics_mc,mean_ks,0.0381,0.0036,5,0.0380;0.0319;0.0407;0.0408;0.0390
+Apple (quality),apple_quality,physics_mc,coverage_at_90,0.9013,0.0041,5,0.9061;0.9013;0.9021;0.9021;0.8948
+Apple (quality),apple_quality,physics_mc,calib_err,0.0171,0.0014,5,0.0160;0.0155;0.0177;0.0174;0.0190
+Apple (quality),apple_quality,regression,corr_dist,0.7034,0.0457,5,0.7085;0.7459;0.7086;0.6264;0.7276
+Apple (quality),apple_quality,regression,mean_ks,0.0454,0.0076,5,0.0445;0.0448;0.0383;0.0412;0.0581
+Apple (quality),apple_quality,regression,coverage_at_90,0.8883,0.0061,5,0.8912;0.8952;0.8908;0.8799;0.8842
+Apple (quality),apple_quality,regression,calib_err,0.0242,0.0042,5,0.0226;0.0248;0.0191;0.0241;0.0306
+Apple (quality),apple_quality,vae,corr_dist,0.8335,0.0584,5,0.9200;0.7811;0.8581;0.7807;0.8275
+Apple (quality),apple_quality,vae,mean_ks,0.082,0.0056,5,0.0873;0.0851;0.0749;0.0770;0.0855
+Apple (quality),apple_quality,vae,coverage_at_90,0.806,0.0095,5,0.8044;0.7918;0.8064;0.8183;0.8088
+Apple (quality),apple_quality,vae,calib_err,0.086,0.0074,5,0.0848;0.0971;0.0852;0.0762;0.0866
+Apple (quality),apple_quality,hybrid_vae,corr_dist,0.5242,0.0369,5,0.5588;0.5339;0.5141;0.5486;0.4654
+Apple (quality),apple_quality,hybrid_vae,mean_ks,0.0289,0.0053,5,0.0284;0.0219;0.0271;0.0305;0.0366
+Apple (quality),apple_quality,hybrid_vae,coverage_at_90,0.8977,0.0037,5,0.8996;0.9001;0.8980;0.8995;0.8913
+Apple (quality),apple_quality,hybrid_vae,calib_err,0.0117,0.0024,5,0.0115;0.0081;0.0129;0.0113;0.0146
+Apple (quality),apple_quality,physics_mc,tstr_acc,0.7678,0.0185,5,0.7400;0.7658;0.7917;0.7725;0.7692
+Apple (quality),apple_quality,regression,tstr_acc,0.8087,0.0154,5,0.7867;0.8208;0.8167;0.7983;0.8208
+Apple (quality),apple_quality,vae,tstr_acc,0.8057,0.0158,5,0.8058;0.8250;0.7992;0.7833;0.8150
+Apple (quality),apple_quality,hybrid_vae,tstr_acc,0.8663,0.0077,5,0.8600;0.8783;0.8675;0.8592;0.8667
+Apple (quality),apple_quality,real,tstr_acc,0.8882,0.0139,5,0.8667;0.9000;0.8967;0.8817;0.8958
+Banana (quality),banana_quality,physics_mc,corr_dist,0.2966,0.0745,5,0.3822;0.2614;0.3695;0.2545;0.2154
+Banana (quality),banana_quality,physics_mc,mean_ks,0.0941,0.0094,5,0.0811;0.0915;0.0989;0.0927;0.1063
+Banana (quality),banana_quality,physics_mc,coverage_at_90,0.9433,0.0161,5,0.9687;0.9340;0.9487;0.9273;0.9380
+Banana (quality),banana_quality,physics_mc,calib_err,0.0757,0.0112,5,0.0570;0.0743;0.0828;0.0797;0.0848
+Banana (quality),banana_quality,regression,corr_dist,0.3032,0.0577,5,0.3688;0.3378;0.3173;0.2693;0.2228
+Banana (quality),banana_quality,regression,mean_ks,0.0695,0.0032,5,0.0739;0.0689;0.0651;0.0697;0.0700
+Banana (quality),banana_quality,regression,coverage_at_90,0.9936,0.0059,5,0.9960;1.0000;0.9973;0.9873;0.9873
+Banana (quality),banana_quality,regression,calib_err,0.0364,0.005,5,0.0415;0.0327;0.0339;0.0420;0.0318
+Banana (quality),banana_quality,vae,corr_dist,0.3588,0.0821,5,0.4391;0.3727;0.4316;0.2523;0.2983
+Banana (quality),banana_quality,vae,mean_ks,0.094,0.0088,5,0.0899;0.0989;0.0837;0.1063;0.0910
+Banana (quality),banana_quality,vae,coverage_at_90,0.9759,0.0166,5,0.9767;0.9760;0.9867;0.9487;0.9913
+Banana (quality),banana_quality,vae,calib_err,0.0605,0.0094,5,0.0511;0.0514;0.0632;0.0733;0.0635
+Banana (quality),banana_quality,hybrid_vae,corr_dist,0.2976,0.0504,5,0.3346;0.3422;0.2928;0.3032;0.2153
+Banana (quality),banana_quality,hybrid_vae,mean_ks,0.0593,0.0065,5,0.0655;0.0498;0.0561;0.0602;0.0649
+Banana (quality),banana_quality,hybrid_vae,coverage_at_90,0.8947,0.0103,5,0.9080;0.8993;0.8973;0.8833;0.8853
+Banana (quality),banana_quality,hybrid_vae,calib_err,0.0235,0.0074,5,0.0285;0.0182;0.0184;0.0341;0.0183
+Banana (quality),banana_quality,physics_mc,tstr_acc,0.8467,0.0274,5,0.8767;0.8633;0.8533;0.8067;0.8333
+Banana (quality),banana_quality,regression,tstr_acc,0.8433,0.0308,5,0.8100;0.8633;0.8600;0.8733;0.8100
+Banana (quality),banana_quality,vae,tstr_acc,0.782,0.0261,5,0.7900;0.8067;0.8033;0.7467;0.7633
+Banana (quality),banana_quality,hybrid_vae,tstr_acc,0.9113,0.0145,5,0.9267;0.9000;0.9067;0.9267;0.8967
+Banana (quality),banana_quality,real,tstr_acc,0.926,0.0179,5,0.9433;0.9100;0.9467;0.9100;0.9200
+Date (nutrients),biofood_date_region,physics_mc,corr_dist,1.056,0.1058,5,1.0334;1.1289;1.0946;1.1411;0.8821
+Date (nutrients),biofood_date_region,physics_mc,mean_ks,0.25,0.0563,5,0.2201;0.2081;0.3483;0.2378;0.2355
+Date (nutrients),biofood_date_region,physics_mc,coverage_at_90,0.915,0.026,5,0.9083;0.8750;0.9417;0.9333;0.9167
+Date (nutrients),biofood_date_region,physics_mc,calib_err,0.0903,0.0134,5,0.1065;0.0831;0.0791;0.0796;0.1031
+Date (nutrients),biofood_date_region,regression,corr_dist,1.0392,0.184,5,0.9090;1.1258;1.0526;1.2891;0.8194
+Date (nutrients),biofood_date_region,regression,mean_ks,0.2045,0.049,5,0.1878;0.1621;0.2862;0.1758;0.2108
+Date (nutrients),biofood_date_region,regression,coverage_at_90,0.92,0.0254,5,0.9083;0.8833;0.9500;0.9333;0.9250
+Date (nutrients),biofood_date_region,regression,calib_err,0.083,0.0108,5,0.1006;0.0754;0.0758;0.0769;0.0862
+Date (nutrients),biofood_date_region,vae,corr_dist,0.7359,0.2585,5,0.3991;0.7805;0.8793;1.0554;0.5651
+Date (nutrients),biofood_date_region,vae,mean_ks,0.3359,0.0534,5,0.2965;0.3247;0.4275;0.3310;0.3001
+Date (nutrients),biofood_date_region,vae,coverage_at_90,0.7533,0.0173,5,0.7500;0.7417;0.7333;0.7750;0.7667
+Date (nutrients),biofood_date_region,vae,calib_err,0.139,0.0232,5,0.1471;0.1430;0.1658;0.1023;0.1367
+Date (nutrients),biofood_date_region,hybrid_vae,corr_dist,0.5602,0.2517,5,0.3425;0.6242;0.6189;0.9191;0.2964
+Date (nutrients),biofood_date_region,hybrid_vae,mean_ks,0.1873,0.0499,5,0.1706;0.1443;0.2736;0.1699;0.1783
+Date (nutrients),biofood_date_region,hybrid_vae,coverage_at_90,0.8583,0.0276,5,0.8500;0.8167;0.8667;0.8667;0.8917
+Date (nutrients),biofood_date_region,hybrid_vae,calib_err,0.0777,0.0192,5,0.1090;0.0695;0.0731;0.0574;0.0796
+Safou (nutrients),biofood_safou_region,physics_mc,corr_dist,0.3173,0.2054,5,0.1548;0.1218;0.2479;0.4681;0.5940
+Safou (nutrients),biofood_safou_region,physics_mc,mean_ks,0.2536,0.0712,5,0.1919;0.1910;0.2252;0.3370;0.3230
+Safou (nutrients),biofood_safou_region,physics_mc,coverage_at_90,0.9615,0.0136,5,0.9615;0.9423;0.9808;0.9615;0.9615
+Safou (nutrients),biofood_safou_region,physics_mc,calib_err,0.1029,0.0333,5,0.0744;0.0783;0.0968;0.1572;0.1077
+Safou (nutrients),biofood_safou_region,regression,corr_dist,0.2773,0.1747,5,0.1683;0.1765;0.2552;0.2028;0.5839
+Safou (nutrients),biofood_safou_region,regression,mean_ks,0.2799,0.0686,5,0.2037;0.2508;0.2450;0.3741;0.3257
+Safou (nutrients),biofood_safou_region,regression,coverage_at_90,0.95,0.0219,5,0.9231;0.9423;0.9808;0.9615;0.9423
+Safou (nutrients),biofood_safou_region,regression,calib_err,0.1328,0.0543,5,0.0790;0.1453;0.0988;0.2191;0.1216
+Safou (nutrients),biofood_safou_region,vae,corr_dist,0.1583,0.0484,5,0.0770;0.1509;0.1806;0.1926;0.1905
+Safou (nutrients),biofood_safou_region,vae,mean_ks,0.2297,0.0706,5,0.1944;0.1366;0.3227;0.2664;0.2283
+Safou (nutrients),biofood_safou_region,vae,coverage_at_90,0.8269,0.0561,5,0.7308;0.8462;0.8269;0.8654;0.8654
+Safou (nutrients),biofood_safou_region,vae,calib_err,0.0967,0.0246,5,0.0871;0.0705;0.0956;0.1371;0.0932
+Safou (nutrients),biofood_safou_region,hybrid_vae,corr_dist,0.2306,0.1759,5,0.0753;0.0629;0.1856;0.3850;0.4443
+Safou (nutrients),biofood_safou_region,hybrid_vae,mean_ks,0.2734,0.0646,5,0.2311;0.2213;0.2359;0.3716;0.3073
+Safou (nutrients),biofood_safou_region,hybrid_vae,coverage_at_90,0.9154,0.0322,5,0.8654;0.9038;0.9231;0.9423;0.9423
+Safou (nutrients),biofood_safou_region,hybrid_vae,calib_err,0.1225,0.0448,5,0.1024;0.1049;0.1026;0.2027;0.1002
+Mango (Vit C),mango_composition,physics_mc,corr_dist,0.4173,0.1525,5,0.4121;0.3547;0.3220;0.3162;0.6814
+Mango (Vit C),mango_composition,physics_mc,mean_ks,0.13,0.0314,5,0.1321;0.1291;0.1037;0.1040;0.1808
+Mango (Vit C),mango_composition,physics_mc,coverage_at_90,0.9036,0.0165,5,0.8929;0.8988;0.9107;0.8869;0.9286
+Mango (Vit C),mango_composition,physics_mc,calib_err,0.0423,0.0135,5,0.0364;0.0257;0.0372;0.0551;0.0573
+Mango (Vit C),mango_composition,regression,corr_dist,0.3786,0.1408,5,0.3104;0.3683;0.3014;0.2884;0.6244
+Mango (Vit C),mango_composition,regression,mean_ks,0.1419,0.0301,5,0.1262;0.1255;0.1297;0.1329;0.1955
+Mango (Vit C),mango_composition,regression,coverage_at_90,0.9631,0.0129,5,0.9583;0.9762;0.9762;0.9464;0.9583
+Mango (Vit C),mango_composition,regression,calib_err,0.078,0.016,5,0.0534;0.0785;0.0795;0.0800;0.0984
+Mango (Vit C),mango_composition,vae,corr_dist,0.4298,0.18,5,0.3581;0.5761;0.2168;0.3438;0.6541
+Mango (Vit C),mango_composition,vae,mean_ks,0.1576,0.0227,5,0.1281;0.1633;0.1700;0.1418;0.1850
+Mango (Vit C),mango_composition,vae,coverage_at_90,0.919,0.02,5,0.9286;0.9405;0.9167;0.8869;0.9226
+Mango (Vit C),mango_composition,vae,calib_err,0.0829,0.023,5,0.0518;0.0792;0.0753;0.0946;0.1136
+Mango (Vit C),mango_composition,hybrid_vae,corr_dist,0.3471,0.2249,5,0.1588;0.4541;0.0934;0.3823;0.6469
+Mango (Vit C),mango_composition,hybrid_vae,mean_ks,0.135,0.037,5,0.1273;0.1273;0.1006;0.1215;0.1982
+Mango (Vit C),mango_composition,hybrid_vae,coverage_at_90,0.8893,0.009,5,0.8869;0.8869;0.9048;0.8869;0.8810
+Mango (Vit C),mango_composition,hybrid_vae,calib_err,0.0465,0.0102,5,0.0460;0.0337;0.0403;0.0597;0.0530

@@ -1,0 +1,5 @@
+Engine,Correlation Distance (Euclidean),Mean KS Statistic
+Physics-Informed Monte Carlo,1.1289365598141685,0.20813333333333334
+Regression,1.1258436914817822,0.16213333333333332
+Variational Autoencoder,0.780539512751571,0.32466666666666666
+Physics-Informed VAE (Hybrid),0.6241719665301991,0.14433333333333334
