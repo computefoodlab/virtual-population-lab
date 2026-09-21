@@ -32,7 +32,7 @@ SCATTER_SIZE = 22
 # paths (e.g. correlation_physics_mc.png) keep the raw keys — those are
 # stable identifiers other code paths still filter/build on.
 DISPLAY_NAMES = {
-    "physics_mc": "Physics-Informed Monte Carlo",
+    "physics_mc": "Structural Monte Carlo",
     "regression": "Regression",
     "vae": "Variational Autoencoder",
     "hybrid_vae": "Physics-Informed VAE",

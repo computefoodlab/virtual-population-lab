@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 13:10 from `grape_berry`. Re-run `make run CONFIG=grape_berry` to refresh._
+_Auto-generated on 2026-09-21 23:55 from `grape_berry`. Re-run `make run CONFIG=grape_berry` to refresh._
 
 ## Objective
 
@@ -18,7 +18,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 **Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
-caller-supplied causal graph:
+caller-supplied structural graph:
 
 - Each variable in `root_variables` is drawn from its own real marginal
   distribution (assumed Gaussian).
@@ -30,9 +30,15 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-The causal structure and roots are dataset knowledge supplied by the caller
-(see src/configs/) — this function has no dataset-specific assumptions baked
-in, so it works unchanged for a different set of features and relationships.
+Where the caller supplies `constraints` — genuine conservation / mass-balance
+laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
+generated population is projected onto the feasible region with the same hard
+feasibility projection the PI-VAE uses, so those physical laws hold exactly
+(0% violations). This is what makes the engine physics-informed rather than
+only structure-informed; with no constraints it is plain structural Monte
+Carlo. The structural graph, roots and constraints are all dataset knowledge
+supplied by the caller (see src/configs/), so the function works unchanged
+for a different set of features and relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -179,7 +185,7 @@ capacity, collapse, and early-stopping trade-offs.
 | Mcmc | 0.9588 | 0.0475 |
 | Regression | **0.3380** | 0.0586 |
 | Variational Autoencoder | 0.5289 | 0.2309 |
-| Physics-Informed VAE | 0.4464 | **0.0409** |
+| Physics-Informed VAE | 0.5031 | **0.0409** |
 
 (Lower is better for both metrics; bold = best.)
 
@@ -234,7 +240,7 @@ Correlation distance for each engine's synthetic data against the train split it
 | Mcmc | 1.0316 | 0.9588 | 0.0727 |
 | Regression | 0.3272 | 0.3380 | 0.0109 |
 | Variational Autoencoder | 0.4829 | 0.5289 | 0.0460 |
-| Physics-Informed VAE | 0.2405 | 0.4464 | 0.2058 |
+| Physics-Informed VAE | 0.2777 | 0.5031 | 0.2254 |
 
 ## Downstream Utility (TSTR)
 
@@ -247,7 +253,7 @@ Train-on-Synthetic, Test-on-Real for the `Genotype` label: a RandomForest is tra
 | Mcmc | 0.6616 | n/a |
 | Regression | 0.7007 | n/a |
 | Variational Autoencoder | 0.6377 | n/a |
-| Physics-Informed VAE | 0.6898 | n/a |
+| Physics-Informed VAE | 0.6985 | n/a |
 
 (Higher is better; closer to the Real ceiling = more useful synthetic data.)
 

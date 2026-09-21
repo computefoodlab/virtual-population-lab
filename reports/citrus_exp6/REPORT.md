@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 17:47 from `citrus_exp6`. Re-run `make run CONFIG=citrus_exp6` to refresh._
+_Auto-generated on 2026-09-21 23:54 from `citrus_exp6`. Re-run `make run CONFIG=citrus_exp6` to refresh._
 
 ## Objective
 
@@ -185,13 +185,13 @@ capacity, collapse, and early-stopping trade-offs.
 | Mcmc | 0.4225 | 0.2078 |
 | Regression | 0.3311 | 0.1852 |
 | Variational Autoencoder | 0.5610 | 0.2423 |
-| Physics-Informed VAE | **0.2681** | **0.1296** |
+| Physics-Informed VAE | **0.3235** | **0.1296** |
 
 (Lower is better for both metrics; bold = best.)
 
 ## Findings
 
-- Best **Correlation Distance (Euclidean)**: Physics-Informed VAE (0.2681)
+- Best **Correlation Distance (Euclidean)**: Physics-Informed VAE (0.3235)
 - Best **Mean KS Statistic**: Physics-Informed VAE (0.1296)
 
 Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat / higher p_value = closer):
@@ -236,7 +236,7 @@ Correlation distance for each engine's synthetic data against the train split it
 | Mcmc | 0.3298 | 0.4225 | 0.0927 |
 | Regression | 0.2647 | 0.3311 | 0.0664 |
 | Variational Autoencoder | 0.5252 | 0.5610 | 0.0359 |
-| Physics-Informed VAE | 0.0809 | 0.2681 | 0.1872 |
+| Physics-Informed VAE | 0.1608 | 0.3235 | 0.1627 |
 
 ## Downstream Utility (TSTR)
 

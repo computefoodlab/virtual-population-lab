@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 17:45 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
+_Auto-generated on 2026-09-21 23:54 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
 
 ## Objective
 
@@ -185,7 +185,7 @@ capacity, collapse, and early-stopping trade-offs.
 | Mcmc | **0.3655** | **0.0683** |
 | Regression | 0.5819 | 0.1251 |
 | Variational Autoencoder | 0.7584 | 0.2232 |
-| Physics-Informed VAE | 0.3982 | 0.0930 |
+| Physics-Informed VAE | 0.4164 | 0.0930 |
 
 (Lower is better for both metrics; bold = best.)
 
@@ -221,12 +221,12 @@ Lower = closer to real; bold = best per feature.
 
 | Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
-| SSC | 0.749 | 0.855 (1.14x) | 0.788 (1.05x) | 0.794 (1.06x) | 0.900 (1.20x) | 0.826 (1.10x) |
+| SSC | 0.749 | 0.855 (1.14x) | 0.788 (1.05x) | 0.794 (1.06x) | 0.900 (1.20x) | 0.828 (1.11x) |
 | Malic | 0.514 | 0.503 (0.98x) | 0.503 (0.98x) | 0.504 (0.98x) | 0.609 (1.18x) | 0.510 (0.99x) |
 | Citric | 2.470 | 2.060 (0.83x) | 1.989 (0.81x) | 2.030 (0.82x) | 2.122 (0.86x) | 2.065 (0.84x) |
 | Glutamic | 0.628 | 0.671 (1.07x) | 0.667 (1.06x) | 0.636 (1.01x) | 0.796 (1.27x) | 0.673 (1.07x) |
 | Fructose | 4.204 | 4.764 (1.13x) | 4.407 (1.05x) | 4.482 (1.07x) | 4.979 (1.18x) | 4.652 (1.11x) |
-| Glucose | 3.870 | 4.487 (1.16x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.332 (1.12x) |
+| Glucose | 3.870 | 4.487 (1.16x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.331 (1.12x) |
 
 ## Generalization Check
 
@@ -238,7 +238,7 @@ Correlation distance for each engine's synthetic data against the train split it
 | Mcmc | 0.4961 | 0.3655 | 0.1306 |
 | Regression | 0.4597 | 0.5819 | 0.1222 |
 | Variational Autoencoder | 0.5512 | 0.7584 | 0.2073 |
-| Physics-Informed VAE | 0.1380 | 0.3982 | 0.2602 |
+| Physics-Informed VAE | 0.1484 | 0.4164 | 0.2680 |
 
 ## Downstream Utility (TSTR)
 
@@ -251,7 +251,7 @@ Train-on-Synthetic, Test-on-Real for the `Type` label: a RandomForest is trained
 | Mcmc | 0.7590 | n/a |
 | Regression | 0.7744 | n/a |
 | Variational Autoencoder | 0.6923 | n/a |
-| Physics-Informed VAE | 0.7333 | n/a |
+| Physics-Informed VAE | 0.7538 | n/a |
 
 (Higher is better; closer to the Real ceiling = more useful synthetic data.)
 

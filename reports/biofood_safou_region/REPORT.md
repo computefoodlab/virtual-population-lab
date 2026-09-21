@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 17:46 from `biofood_safou_region`. Re-run `make run CONFIG=biofood_safou_region` to refresh._
+_Auto-generated on 2026-09-21 23:56 from `biofood_safou_region`. Re-run `make run CONFIG=biofood_safou_region` to refresh._
 
 ## Objective
 
@@ -185,7 +185,7 @@ capacity, collapse, and early-stopping trade-offs.
 | Mcmc | 0.5002 | 0.2706 |
 | Regression | 0.5838 | 0.2924 |
 | Variational Autoencoder | 0.5959 | 0.3090 |
-| Physics-Informed VAE | 0.5596 | 0.2961 |
+| Physics-Informed VAE | 0.6482 | 0.2956 |
 
 (Lower is better for both metrics; bold = best.)
 
@@ -210,8 +210,8 @@ Lower = closer to real; bold = best per feature.
 |---|---|---|---|---|---|
 | Water | **0.2535** | 0.3013 | 0.2984 | 0.3355 | 0.3353 |
 | Fat | **0.2485** | 0.2793 | 0.2834 | 0.3355 | 0.2993 |
-| Palmitic | **0.2385** | 0.2634 | 0.2715 | 0.3175 | 0.2934 |
-| Stearic | 0.2552 | **0.2383** | 0.3163 | 0.2473 | 0.2563 |
+| Palmitic | **0.2385** | 0.2634 | 0.2715 | 0.3175 | 0.2944 |
+| Stearic | 0.2552 | **0.2383** | 0.3163 | 0.2473 | 0.2533 |
 
 ## Feature Spread Comparison
 
@@ -220,8 +220,8 @@ Lower = closer to real; bold = best per feature.
 | Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
 | Water | 11.395 | 9.915 (0.87x) | 9.501 (0.83x) | 9.431 (0.83x) | 7.627 (0.67x) | 9.456 (0.83x) |
-| Fat | 10.947 | 9.144 (0.84x) | 9.295 (0.85x) | 9.346 (0.85x) | 7.064 (0.65x) | 9.155 (0.84x) |
-| Palmitic | 4.135 | 3.612 (0.87x) | 3.685 (0.89x) | 3.699 (0.89x) | 2.796 (0.68x) | 3.684 (0.89x) |
+| Fat | 10.947 | 9.144 (0.84x) | 9.295 (0.85x) | 9.346 (0.85x) | 7.064 (0.65x) | 9.167 (0.84x) |
+| Palmitic | 4.135 | 3.612 (0.87x) | 3.685 (0.89x) | 3.699 (0.89x) | 2.796 (0.68x) | 3.679 (0.89x) |
 | Stearic | 0.168 | 0.215 (1.28x) | 0.216 (1.28x) | 0.218 (1.30x) | 0.170 (1.01x) | 0.220 (1.31x) |
 
 ## Generalization Check
@@ -234,7 +234,7 @@ Correlation distance for each engine's synthetic data against the train split it
 | Mcmc | 0.1410 | 0.5002 | 0.3592 |
 | Regression | 0.2864 | 0.5838 | 0.2974 |
 | Variational Autoencoder | 0.1702 | 0.5959 | 0.4257 |
-| Physics-Informed VAE | 0.1278 | 0.5596 | 0.4318 |
+| Physics-Informed VAE | 0.2203 | 0.6482 | 0.4279 |
 
 ## Uncertainty Calibration (Coverage)
 
@@ -246,7 +246,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 | Mcmc | 0.865 | **0.0989** |
 | Regression | 0.904 | 0.1276 |
 | Variational Autoencoder | 0.673 | 0.1960 |
-| Physics-Informed VAE | 0.904 | 0.1255 |
+| Physics-Informed VAE | 0.904 | 0.1284 |
 
 (Coverage closest to nominal and lowest calibration error = best-calibrated uncertainty.)
 

@@ -36,15 +36,17 @@ def generate(df, features, causal_graph, root_variables, n_samples=1000,
     ancestral Monte Carlo sampling (this function) is exact — there's no
     intractable distribution to approximate, so no need for MCMC.
 
-    Where the caller supplies `constraints` — genuine conservation / mass-balance
-    laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
-    generated population is projected onto the feasible region with the same hard
-    feasibility projection the PI-VAE uses, so those physical laws hold exactly
-    (0% violations). This is what makes the engine physics-informed rather than
-    only structure-informed; with no constraints it is plain structural Monte
-    Carlo. The structural graph, roots and constraints are all dataset knowledge
-    supplied by the caller (see src/configs/), so the function works unchanged
-    for a different set of features and relationships.
+    This is the Structural Monte Carlo (SMC) baseline: its parent-child edges are
+    data-fitted structural priors, not physics. Where the caller supplies
+    `constraints` — genuine conservation / mass-balance laws  sum_i w_i x_i <= bound
+    in source units, not fitted from data — the generated population is projected
+    onto the feasible region with the same hard feasibility projection the PI-VAE
+    uses, so those physical laws hold exactly (0% violations). The term
+    physics-informed is reserved for the PI-VAE; here the conservation projection is
+    an added constraint on a structural baseline. The structural graph, roots and
+    constraints are all dataset knowledge supplied by the caller (see src/configs/),
+    so the function works unchanged for a different set of features and
+    relationships.
     """
     generated = {}
 
