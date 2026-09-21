@@ -26,7 +26,17 @@ def _calibrate_marginals(generated, real):
     n = generated.shape[0]
     for j in range(generated.shape[1]):
         quantiles = (rankdata(generated[:, j], method="average") - 0.5) / n
-        calibrated[:, j] = np.quantile(real[:, j], quantiles)
+        # Map to the feature's EMPIRICAL support (actual observed values) via the
+        # empirical inverse-CDF, not an interpolated quantile. This preserves
+        # discreteness and point masses — e.g. a zero-inflated or binned score
+        # whose real support is a handful of distinct values — instead of
+        # smearing them across a continuum, matching how the copula inverse-CDF
+        # resamples. For continuous features (many distinct values) it is
+        # indistinguishable from interpolation. Monotonic in the generated ranks,
+        # so the learned rank (Spearman) dependence is preserved.
+        real_sorted = np.sort(real[:, j])
+        idx = np.clip((quantiles * len(real_sorted)).astype(int), 0, len(real_sorted) - 1)
+        calibrated[:, j] = real_sorted[idx]
     return calibrated
 
 
@@ -108,6 +118,61 @@ def _fit_edges(x, features, causal_graph):
     return edges
 
 
+def build_edge_constants(x, features, causal_graph, fixed_slopes, feature_scale=None):
+    """
+    Like `_fit_edges`, but any edge whose (parent, child) key appears in
+    `fixed_slopes` uses a slope imposed a priori (from a mechanistic/literature
+    constant, given in SOURCE units) instead of the data-fitted one; all other
+    edges are still fit from data. The intercept and residual variance are always
+    taken from the data so the imposed constant only fixes the *slope* (the
+    mechanism), leaving the developmental offset and the physical noise level
+    identified from the sample.
+
+    `x` is the scaled matrix the VAE trains in. A source-unit slope m maps to the
+    scaled space as m * std_parent / std_child; `feature_scale` supplies those
+    per-feature standard deviations (a StandardScaler's `scale_`), or None when
+    `x` is already in source units (then the slope is used as-is).
+
+    Example: grape Glucose->Fructose is imposed at m=1.0 (invertase produces
+    glucose and fructose in 1:1 stoichiometry, equal molar mass), which the data
+    independently confirms (fitted slope ~0.99), so imposing it does not change
+    fidelity but makes the edge mechanism-derived rather than self-fitted.
+    """
+    index = {name: i for i, name in enumerate(features)}
+    edges = []
+
+    for parent, child in causal_graph:
+        if parent not in index or child not in index:
+            raise ValueError(
+                f"Edge ({parent!r} -> {child!r}) references a feature not in "
+                f"FEATURES {features} — check the config's CAUSAL_GRAPH."
+            )
+        pi, ci = index[parent], index[child]
+        p, c = x[:, pi], x[:, ci]
+
+        if (parent, child) in fixed_slopes:
+            m = float(fixed_slopes[(parent, child)])
+            if feature_scale is not None:
+                slope = m * float(feature_scale[pi]) / float(feature_scale[ci])
+            else:
+                slope = m
+        else:
+            slope = np.cov(p, c, ddof=0)[0, 1] / np.var(p)
+
+        intercept = c.mean() - slope * p.mean()
+        resid_var = np.var(c - (slope * p + intercept))
+
+        edges.append({
+            "parent_idx": pi,
+            "child_idx": ci,
+            "slope": float(slope),
+            "intercept": float(intercept),
+            "resid_var": float(resid_var),
+        })
+
+    return edges
+
+
 def _marginal_loss(generated, real):
     """
     Per-feature squared 1D Wasserstein distance: sort each column of the
@@ -150,6 +215,59 @@ def _decode_samples(vae, reference_batch, n_samples, latent_dim, prior_type):
     else:
         z = torch.randn(n_samples, latent_dim)
     return vae.decoder(z)
+
+
+def _build_constraints(constraints, features):
+    """Turn a list of (weights_dict, bound) inequalities  sum_i w_i x_i <= bound
+    (in real units) into coefficient matrix A (C x D) and bound vector b (C).
+    These are genuine physical laws (mass balance / non-negativity), not fitted
+    from data — what makes the constrained VAE physics-informed rather than only
+    structure-informed."""
+    idx = {f: i for i, f in enumerate(features)}
+    A = np.zeros((len(constraints), len(features)), np.float32)
+    b = np.zeros(len(constraints), np.float32)
+    for r, (weights, bound) in enumerate(constraints):
+        for f, w in weights.items():
+            A[r, idx[f]] = w
+        b[r] = bound
+    return A, b
+
+
+def _constraint_penalty(raw_batch, A_t, b_t):
+    """Mean squared violation of A x <= b: relu(A x - b)^2. Zero when every row is
+    physically feasible (conservation / non-negativity respected)."""
+    viol = torch.relu(raw_batch @ A_t.T - b_t)
+    return (viol ** 2).mean()
+
+
+def _project_constraints(X, A, b, nonneg=True, iters=25):
+    """
+    Hard feasibility projection at generation: for each generated row, project it
+    onto the region A x <= b by cyclic Euclidean projection onto each violated
+    half-space (subtract (a.x - b) a / ||a||^2), a few passes to handle coupled
+    constraints. Optionally clip to non-negative afterwards. Unlike the soft
+    training penalty, this GUARANTEES the conservation / compositional laws hold
+    in the returned population (0% violations) rather than merely discouraging
+    violations. A and b are in source units, matching the generated matrix.
+    """
+    X = np.array(X, dtype=float, copy=True)
+    for _ in range(iters):
+        moved = False
+        for r in range(A.shape[0]):
+            w = A[r]
+            wn = float((w ** 2).sum())
+            if wn <= 0:
+                continue
+            viol = X @ w - b[r]
+            m = viol > 1e-9
+            if m.any():
+                X[m] -= np.outer(viol[m], w) / wn
+                moved = True
+        if nonneg:
+            X = np.clip(X, 0.0, None)
+        if not moved:
+            break
+    return X
 
 
 def _physics_loss(batch, edges):
@@ -216,6 +334,10 @@ def generate(
     hidden_dim=128,
     dropout=0.0,
     free_bits=0.0,
+    constraints=None,
+    constraint_weight=0.0,
+    edge_constants=None,
+    calib_reference=None,
 ):
     """
     The physics-informed VAE (PI-VAE): the same generative model as the plain
@@ -271,9 +393,37 @@ def generate(
     capacity, collapse, and early-stopping trade-offs.
     """
     x = np.asarray(x, dtype=np.float32)
-    edges = _fit_edges(x, features, causal_graph)
-    log.info("  fit %d causal edge(s) as physics constraints: %s",
-             len(edges), ", ".join(f"{p}->{c}" for p, c in causal_graph))
+    if edge_constants is not None:
+        # Use edge parameters specified a priori (e.g. from literature/mechanism)
+        # instead of fitting slope/intercept/residual from the observed data. This
+        # makes the structural term genuinely mechanism-informed, not self-fitted.
+        edges = edge_constants
+        log.info("  using %d PRE-SPECIFIED (literature/mechanistic) edge(s)", len(edges))
+    else:
+        edges = _fit_edges(x, features, causal_graph)
+        log.info("  fit %d causal edge(s) as physics constraints: %s",
+                 len(edges), ", ".join(f"{p}->{c}" for p, c in causal_graph))
+
+    # Conservation / mass-balance constraints (real physical laws, in source units).
+    # Evaluated on the generated batch after inverse-scaling, so they need the
+    # scaler's mean/scale as tensors when the VAE trains in standardized space.
+    use_constraints = bool(constraints) and constraint_weight > 0
+    if use_constraints:
+        A_np, b_np = _build_constraints(constraints, features)
+        if scaler is not None:
+            mean_t = torch.FloatTensor(scaler.mean_.astype(np.float32))
+            scale_t = torch.FloatTensor(scaler.scale_.astype(np.float32))
+            row_scale = np.maximum(np.abs(A_np) @ scaler.scale_.astype(np.float32), 1e-6)
+        else:
+            mean_t, scale_t = None, None
+            row_scale = np.maximum(np.abs(A_np).sum(1), 1e-6)
+        # normalize each inequality by the typical magnitude of its linear combo,
+        # so the penalty is in ~std units and comparable to the other loss terms
+        A_np = A_np / row_scale[:, None]
+        b_np = b_np / row_scale
+        A_t, b_t = torch.FloatTensor(A_np), torch.FloatTensor(b_np)
+        log.info("  enforcing %d conservation constraint(s), weight %.2f",
+                 len(constraints), constraint_weight)
 
     x_tensor = torch.FloatTensor(x)
     n = x_tensor.shape[0]
@@ -313,7 +463,7 @@ def generate(
             # A batch of freshly generated rows, drawn the same way final
             # generation is: always needed by the marginal term, and by the
             # covariance/physics terms when constrain_generated is set.
-            if marginal_weight > 0 or constrain_generated:
+            if marginal_weight > 0 or constrain_generated or use_constraints:
                 gen = _decode_samples(vae, batch, batch.shape[0], latent_dim, prior_type)
 
             cov_target = gen if constrain_generated else recon
@@ -325,12 +475,19 @@ def generate(
             else:
                 marginal_loss = torch.zeros((), device=recon.device)
 
+            if use_constraints:
+                raw_gen = gen * scale_t + mean_t if scale_t is not None else gen
+                constraint_loss = _constraint_penalty(raw_gen, A_t, b_t)
+            else:
+                constraint_loss = torch.zeros((), device=recon.device)
+
             loss = (
                 recon_loss
                 + current_beta * kl_loss
                 + cov_weight * cov_loss
                 + physics_weight * physics_loss
                 + marginal_weight * marginal_loss
+                + constraint_weight * constraint_loss
             )
 
             optimizer.zero_grad()
@@ -377,12 +534,32 @@ def generate(
     with torch.no_grad():
         generated = _decode_samples(vae, x_tensor, n_samples, latent_dim, prior_type).numpy()
 
-    if calibrate_marginals:
-        # In x-space, before any inverse-transform, against the training data.
-        generated = _calibrate_marginals(generated, x)
-
     if scaler is not None:
         generated = scaler.inverse_transform(generated)
+
+    if calibrate_marginals:
+        # In SOURCE units, against the training data. Calibrating here (rather than
+        # in standardized space) preserves each feature's exact empirical support:
+        # standardizing and inverse-transforming perturbs an atom such as an exact
+        # zero into a tiny non-zero value, which destroys the point mass of a
+        # zero-inflated / binned feature. In source units the copula inverse-CDF
+        # maps generated ranks straight onto the real observed values.
+        if calib_reference is not None:
+            x_source = np.asarray(calib_reference)
+        elif scaler is not None:
+            x_source = scaler.inverse_transform(x)
+        else:
+            x_source = np.asarray(x)
+        generated = _calibrate_marginals(generated, x_source)
+
+    if use_constraints:
+        # Hard feasibility projection in source units: guarantees the conservation
+        # / compositional laws hold in the returned population (0% violations),
+        # turning the soft training penalty into an enforced physical constraint.
+        A_src, b_src = _build_constraints(constraints, features)
+        generated = _project_constraints(generated, A_src, b_src)
+        log.info("  projected generated population onto %d conservation constraint(s)",
+                 len(constraints))
 
     return pd.DataFrame(
         generated,

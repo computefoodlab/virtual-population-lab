@@ -1,0 +1,51 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Fidelity, uncertainty calibration, and downstream utility across the five datasets, reported as mean $\pm$ standard deviation over 5 random seeds. Lower is better for correlation distance, mean KS, and calibration error; higher for TSTR accuracy. Best mean per column within a dataset is \textbf{bold}. TSTR ceiling = a classifier trained on real data.}
+\label{tab:main}
+\begin{tabular}{ll ccccc}
+\toprule
+Dataset & Engine & Corr.\ dist.\ $\downarrow$ & Mean KS $\downarrow$ & Calib.\ err.\ $\downarrow$ & Coverage@90 & TSTR acc.\ $\uparrow$ \\
+\midrule
+Citrus (oranges) & Physics-MC & 2.527 $\pm$ 0.091 & 0.196 $\pm$ 0.008 & 0.096 $\pm$ 0.012 & 0.903 $\pm$ 0.032 & 0.981 $\pm$ 0.008 \\
+ & MCMC (prior-art) & 0.621 $\pm$ 0.289 & 0.110 $\pm$ 0.033 & 0.098 $\pm$ 0.013 & 0.871 $\pm$ 0.042 & 0.961 $\pm$ 0.018 \\
+ & Regression & 0.447 $\pm$ 0.175 & 0.139 $\pm$ 0.018 & \textbf{0.065 $\pm$ 0.007} & 0.924 $\pm$ 0.034 & 0.981 $\pm$ 0.016 \\
+ & VAE & 0.806 $\pm$ 0.330 & 0.251 $\pm$ 0.013 & 0.126 $\pm$ 0.024 & 0.859 $\pm$ 0.027 & 0.975 $\pm$ 0.012 \\
+ & PI-VAE & \textbf{0.413 $\pm$ 0.273} & \textbf{0.087 $\pm$ 0.017} & 0.089 $\pm$ 0.005 & 0.910 $\pm$ 0.025 & \textbf{0.986 $\pm$ 0.010} \\
+ & \textit{Real (ceiling)} & -- & -- & -- & -- & \textit{0.983 $\pm$ 0.012} \\
+\midrule
+Tomato & Physics-MC & 1.612 $\pm$ 0.028 & 0.122 $\pm$ 0.023 & 0.037 $\pm$ 0.012 & 0.933 $\pm$ 0.014 & 0.746 $\pm$ 0.030 \\
+ & MCMC (prior-art) & 0.648 $\pm$ 0.217 & 0.078 $\pm$ 0.014 & 0.028 $\pm$ 0.004 & 0.890 $\pm$ 0.013 & 0.762 $\pm$ 0.039 \\
+ & Regression & 0.686 $\pm$ 0.128 & 0.097 $\pm$ 0.021 & 0.030 $\pm$ 0.006 & 0.909 $\pm$ 0.015 & 0.763 $\pm$ 0.037 \\
+ & VAE & 0.667 $\pm$ 0.166 & 0.229 $\pm$ 0.030 & 0.044 $\pm$ 0.008 & 0.908 $\pm$ 0.016 & 0.775 $\pm$ 0.041 \\
+ & PI-VAE & \textbf{0.510 $\pm$ 0.181} & \textbf{0.075 $\pm$ 0.010} & \textbf{0.027 $\pm$ 0.005} & 0.896 $\pm$ 0.016 & \textbf{0.778 $\pm$ 0.031} \\
+ & \textit{Real (ceiling)} & -- & -- & -- & -- & \textit{0.814 $\pm$ 0.014} \\
+\midrule
+Grape berry & Physics-MC & 2.909 $\pm$ 0.062 & 0.191 $\pm$ 0.004 & 0.100 $\pm$ 0.012 & 0.935 $\pm$ 0.003 & 0.390 $\pm$ 0.033 \\
+ & MCMC (prior-art) & 1.147 $\pm$ 0.174 & 0.058 $\pm$ 0.013 & 0.028 $\pm$ 0.005 & 0.905 $\pm$ 0.014 & 0.644 $\pm$ 0.019 \\
+ & Regression & 0.460 $\pm$ 0.133 & 0.067 $\pm$ 0.012 & 0.031 $\pm$ 0.004 & 0.930 $\pm$ 0.004 & 0.678 $\pm$ 0.027 \\
+ & VAE & 0.587 $\pm$ 0.071 & 0.239 $\pm$ 0.024 & 0.094 $\pm$ 0.015 & 0.853 $\pm$ 0.016 & 0.614 $\pm$ 0.014 \\
+ & PI-VAE & \textbf{0.309 $\pm$ 0.045} & \textbf{0.050 $\pm$ 0.006} & \textbf{0.021 $\pm$ 0.003} & 0.900 $\pm$ 0.005 & \textbf{0.719 $\pm$ 0.037} \\
+ & \textit{Real (ceiling)} & -- & -- & -- & -- & \textit{0.768 $\pm$ 0.028} \\
+\midrule
+Apple & Physics-MC & 2.740 $\pm$ 0.256 & 0.181 $\pm$ 0.035 & 0.084 $\pm$ 0.011 & 0.927 $\pm$ 0.009 & 0.766 $\pm$ 0.051 \\
+ & MCMC (prior-art) & 1.061 $\pm$ 0.212 & 0.130 $\pm$ 0.026 & 0.056 $\pm$ 0.004 & 0.895 $\pm$ 0.021 & 0.771 $\pm$ 0.030 \\
+ & Regression & 1.072 $\pm$ 0.179 & 0.143 $\pm$ 0.039 & 0.057 $\pm$ 0.008 & 0.930 $\pm$ 0.009 & 0.784 $\pm$ 0.035 \\
+ & VAE & 1.468 $\pm$ 0.284 & 0.268 $\pm$ 0.035 & 0.085 $\pm$ 0.020 & 0.863 $\pm$ 0.023 & 0.784 $\pm$ 0.030 \\
+ & PI-VAE & \textbf{0.908 $\pm$ 0.185} & \textbf{0.125 $\pm$ 0.022} & \textbf{0.055 $\pm$ 0.005} & 0.910 $\pm$ 0.021 & \textbf{0.813 $\pm$ 0.034} \\
+ & \textit{Real (ceiling)} & -- & -- & -- & -- & \textit{0.810 $\pm$ 0.041} \\
+\midrule
+Mango (Vit C) & Physics-MC & 0.417 $\pm$ 0.152 & \textbf{0.130 $\pm$ 0.031} & \textbf{0.042 $\pm$ 0.013} & 0.904 $\pm$ 0.017 & -- \\
+ & MCMC (prior-art) & 0.371 $\pm$ 0.231 & 0.138 $\pm$ 0.040 & 0.046 $\pm$ 0.010 & 0.894 $\pm$ 0.009 & -- \\
+ & Regression & 0.379 $\pm$ 0.141 & 0.142 $\pm$ 0.030 & 0.078 $\pm$ 0.016 & 0.963 $\pm$ 0.013 & -- \\
+ & VAE & 0.430 $\pm$ 0.180 & 0.158 $\pm$ 0.023 & 0.083 $\pm$ 0.023 & 0.919 $\pm$ 0.020 & -- \\
+ & PI-VAE & \textbf{0.348 $\pm$ 0.225} & 0.136 $\pm$ 0.036 & 0.047 $\pm$ 0.010 & 0.898 $\pm$ 0.010 & -- \\
+\midrule
+Safou (nutrients) & Physics-MC & 0.317 $\pm$ 0.205 & 0.254 $\pm$ 0.071 & 0.103 $\pm$ 0.033 & 0.962 $\pm$ 0.014 & -- \\
+ & MCMC (prior-art) & 0.274 $\pm$ 0.175 & 0.283 $\pm$ 0.068 & 0.122 $\pm$ 0.046 & 0.911 $\pm$ 0.040 & -- \\
+ & Regression & 0.277 $\pm$ 0.175 & 0.280 $\pm$ 0.069 & 0.133 $\pm$ 0.054 & 0.950 $\pm$ 0.022 & -- \\
+ & VAE & \textbf{0.158 $\pm$ 0.048} & \textbf{0.230 $\pm$ 0.071} & \textbf{0.097 $\pm$ 0.025} & 0.827 $\pm$ 0.056 & -- \\
+ & PI-VAE & 0.221 $\pm$ 0.166 & 0.277 $\pm$ 0.065 & 0.133 $\pm$ 0.049 & 0.923 $\pm$ 0.041 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

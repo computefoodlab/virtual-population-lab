@@ -18,6 +18,7 @@ from src.evaluation.evaluate import display_name, generalization_gap, metric_dis
 from src.evaluation.tstr import run_tstr
 from src.generators import (
     hybrid_vae_generator,
+    mcmc_generator,
     physics_mc_generator,
     regression_generator,
     vae_generator,
@@ -28,6 +29,7 @@ from src.generators import (
 # methodology section (pulled from each generate() docstring).
 ENGINE_MODULES = {
     "physics_mc": physics_mc_generator,
+    "mcmc": mcmc_generator,
     "regression": regression_generator,
     "vae": vae_generator,
     "hybrid_vae": hybrid_vae_generator,
@@ -55,6 +57,18 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
     prev_level = gen_log.level
     if quiet:
         gen_log.setLevel(logging.WARNING)
+    # FIXED_EDGES lets a config impose a mechanistic/literature slope on specific
+    # causal-graph edges (given in source units) instead of fitting it from data,
+    # e.g. grape Glucose->Fructose = 1.0 (invertase 1:1 stoichiometry). All other
+    # edges stay data-fitted. Only affects the PI-VAE physics term.
+    fixed_edges = getattr(config, "FIXED_EDGES", None)
+    edge_constants = None
+    if fixed_edges:
+        fixed_slopes = {(e["parent"], e["child"]): e["slope"] for e in fixed_edges}
+        feature_scale = scaler.scale_ if scaler is not None else None
+        edge_constants = hybrid_vae_generator.build_edge_constants(
+            vae_input, fx, config.CAUSAL_GRAPH, fixed_slopes, feature_scale=feature_scale,
+        )
     # calibrate_marginals is passed per-call below so the uncalibrated ablation
     # can toggle only that one flag.
     pi_vae_kwargs = dict(
@@ -66,6 +80,14 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
         constrain_generated=config.VAE_CONSTRAIN_GENERATED,
         patience=config.VAE_PATIENCE, hidden_dim=config.VAE_HIDDEN_DIM,
         dropout=config.VAE_DROPOUT, free_bits=config.VAE_FREE_BITS,
+        edge_constants=edge_constants,
+        constraints=getattr(config, "CONSTRAINTS", None),
+        constraint_weight=getattr(config, "CONSTRAINT_WEIGHT", 0.0),
+        # Raw source-unit training values: the marginal-calibration reference, so
+        # the empirical inverse-CDF maps onto the exact observed values (exact
+        # zeros / discrete levels preserved), which inverse-transforming a scaled
+        # copy would perturb.
+        calib_reference=source_df[fx].values,
     )
     # The uncalibrated PI-VAE is reported alongside the calibrated one only in
     # the main (verbose) run, and only when calibration is on.
@@ -86,6 +108,9 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
         out = {"physics_mc": physics_mc_generator.generate(
             source_df, fx, config.CAUSAL_GRAPH, config.ROOT_VARIABLES, n_samples=n_samples,
         )}
+        _seed()
+        # Correlation-preserving MCMC prior-art baseline (Onwude 2022 / Hertog 2009).
+        out["mcmc"] = mcmc_generator.generate(source_df, fx, n_samples=n_samples)
         _seed()
         out["regression"] = regression_generator.generate(source_df, fx, n_samples=n_samples)
         _seed()

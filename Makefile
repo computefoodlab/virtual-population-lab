@@ -1,9 +1,9 @@
 PYTHON	?= python3.13
 PIP		?= pip3.13
-CONFIG	?= apple_quality
+CONFIG	?= citrus_exp6
 
 # The finalized datasets (keep in sync with src/configs/*.py).
-CONFIGS	= apple_quality banana_quality biofood_date_region biofood_safou_region mango_composition
+CONFIGS	= citrus_exp6 tomato_nir grape_berry apple_samnegard mango_composition biofood_safou_region
 
 venv:
 	$(PYTHON) -m venv venv
@@ -49,13 +49,7 @@ loro-all:
 		venv/bin/$(PYTHON) -m src.run_loro $$cfg || exit 1; \
 	done
 
-# Cross-dataset summary figures (reads results/<cfg>/*.csv; run after run-all
-# and loro-all so the CSVs exist).
-.PHONY: figures
-figures:
-	venv/bin/$(PYTHON) -m src.summary_figures
-
-# Everything, in order: comparisons -> near/far -> summary figures.
+# Everything, in order: comparisons -> near/far.
 .PHONY: all
-all: run-all loro-all figures
+all: run-all loro-all
 	@echo "==================== done: reports/ + results/_summary/ ===================="
