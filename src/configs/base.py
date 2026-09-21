@@ -85,8 +85,8 @@ VAE_BETA = 1.0
 VAE_PATIENCE = 400
 
 # Hidden layer width for the VAE's encoder/decoder, and dropout probability
-# inside them (0.0 disables dropout). The default width is tuned for
-# apple_quality's 2800 rows; on a much smaller dataset that many parameters
+# inside them (0.0 disables dropout). The default width suits a
+# few-thousand-row dataset; on a much smaller dataset that many parameters
 # can memorize training noise instead of generalizing — shrink VAE_HIDDEN_DIM
 # and/or add VAE_DROPOUT if the generalization check shows a large train/test
 # gap (see vae_generator.generate).

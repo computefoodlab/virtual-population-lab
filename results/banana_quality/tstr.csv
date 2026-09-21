@@ -1,6 +1,0 @@
-method,accuracy,roc_auc
-real,0.94,
-physics_mc,0.87,
-regression,0.8366666666666667,
-vae,0.77,
-hybrid_vae,0.92,

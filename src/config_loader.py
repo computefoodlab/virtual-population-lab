@@ -7,7 +7,7 @@ loading based on the wrong script's argv.
 import importlib
 import os
 
-DEFAULT_CONFIG = "apple_quality"
+DEFAULT_CONFIG = "citrus_exp6"
 CONFIGS_DIR = os.path.join(os.path.dirname(__file__), "configs")
 NON_DATASET_CONFIG_FILES = {"__init__.py", "base.py"}
 
