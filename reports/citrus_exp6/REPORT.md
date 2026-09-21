@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 13:09 from `citrus_exp6`. Re-run `make run CONFIG=citrus_exp6` to refresh._
+_Auto-generated on 2026-09-21 17:47 from `citrus_exp6`. Re-run `make run CONFIG=citrus_exp6` to refresh._
 
 ## Objective
 
@@ -18,7 +18,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 **Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
-caller-supplied causal graph:
+caller-supplied structural graph:
 
 - Each variable in `root_variables` is drawn from its own real marginal
   distribution (assumed Gaussian).
@@ -30,9 +30,15 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-The causal structure and roots are dataset knowledge supplied by the caller
-(see src/configs/) — this function has no dataset-specific assumptions baked
-in, so it works unchanged for a different set of features and relationships.
+Where the caller supplies `constraints` — genuine conservation / mass-balance
+laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
+generated population is projected onto the feasible region with the same hard
+feasibility projection the PI-VAE uses, so those physical laws hold exactly
+(0% violations). This is what makes the engine physics-informed rather than
+only structure-informed; with no constraints it is plain structural Monte
+Carlo. The structural graph, roots and constraints are all dataset knowledge
+supplied by the caller (see src/configs/), so the function works unchanged
+for a different set of features and relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -175,7 +181,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 | Engine | Correlation Distance (Euclidean) | Mean KS Statistic |
 |---|---|---|
-| Physics-Informed Monte Carlo | 2.4499 | 0.1813 |
+| Physics-Informed Monte Carlo | 2.4522 | 0.1813 |
 | Mcmc | 0.4225 | 0.2078 |
 | Regression | 0.3311 | 0.1852 |
 | Variational Autoencoder | 0.5610 | 0.2423 |
@@ -214,10 +220,10 @@ Lower = closer to real; bold = best per feature.
 
 | Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
-| RindFresh | 2.305 | 2.494 (1.08x) | 2.227 (0.97x) | 2.387 (1.04x) | 2.127 (0.92x) | 2.392 (1.04x) |
-| RindDry | 0.760 | 0.868 (1.14x) | 0.776 (1.02x) | 0.850 (1.12x) | 0.720 (0.95x) | 0.840 (1.10x) |
-| MoistureLoss | 1.598 | 1.586 (0.99x) | 1.491 (0.93x) | 1.604 (1.00x) | 1.423 (0.89x) | 1.593 (1.00x) |
-| ChillingInjury | 17.518 | 14.490 (0.83x) | 12.782 (0.73x) | 15.729 (0.90x) | 14.427 (0.82x) | 14.438 (0.82x) |
+| RindFresh | 2.305 | 2.479 (1.08x) | 2.227 (0.97x) | 2.387 (1.04x) | 2.127 (0.92x) | 2.392 (1.04x) |
+| RindDry | 0.760 | 0.861 (1.13x) | 0.776 (1.02x) | 0.850 (1.12x) | 0.720 (0.95x) | 0.840 (1.10x) |
+| MoistureLoss | 1.598 | 1.583 (0.99x) | 1.491 (0.93x) | 1.604 (1.00x) | 1.423 (0.89x) | 1.593 (1.00x) |
+| ChillingInjury | 17.518 | 11.631 (0.66x) | 12.782 (0.73x) | 15.729 (0.90x) | 14.427 (0.82x) | 14.438 (0.82x) |
 | Colour | 0.078 | 0.096 (1.22x) | 0.091 (1.16x) | 0.106 (1.35x) | 0.095 (1.21x) | 0.095 (1.22x) |
 
 ## Generalization Check
@@ -226,7 +232,7 @@ Correlation distance for each engine's synthetic data against the train split it
 
 | Engine | Correlation Dist. (vs. Train) | Correlation Dist. (vs. Test) | Gap |
 |---|---|---|---|
-| Physics-Informed Monte Carlo | 2.5292 | 2.4499 | 0.0793 |
+| Physics-Informed Monte Carlo | 2.5316 | 2.4522 | 0.0794 |
 | Mcmc | 0.3298 | 0.4225 | 0.0927 |
 | Regression | 0.2647 | 0.3311 | 0.0664 |
 | Variational Autoencoder | 0.5252 | 0.5610 | 0.0359 |

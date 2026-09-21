@@ -1,6 +1,12 @@
+import logging
+
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
+
+from src.generators.hybrid_vae_generator import _build_constraints, _project_constraints
+
+log = logging.getLogger("vp-lab.generators")
 
 
 def _fit_linear(df, x_col, y_col):
@@ -14,10 +20,11 @@ def _fit_linear(df, x_col, y_col):
     return model.coef_[0], model.intercept_, residual_std
 
 
-def generate(df, features, causal_graph, root_variables, n_samples=1000):
+def generate(df, features, causal_graph, root_variables, n_samples=1000,
+             constraints=None):
     """
     Generates synthetic rows via forward Monte Carlo sampling over a
-    caller-supplied causal graph:
+    caller-supplied structural graph:
 
     - Each variable in `root_variables` is drawn from its own real marginal
       distribution (assumed Gaussian).
@@ -29,9 +36,15 @@ def generate(df, features, causal_graph, root_variables, n_samples=1000):
     ancestral Monte Carlo sampling (this function) is exact — there's no
     intractable distribution to approximate, so no need for MCMC.
 
-    The causal structure and roots are dataset knowledge supplied by the caller
-    (see src/configs/) — this function has no dataset-specific assumptions baked
-    in, so it works unchanged for a different set of features and relationships.
+    Where the caller supplies `constraints` — genuine conservation / mass-balance
+    laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
+    generated population is projected onto the feasible region with the same hard
+    feasibility projection the PI-VAE uses, so those physical laws hold exactly
+    (0% violations). This is what makes the engine physics-informed rather than
+    only structure-informed; with no constraints it is plain structural Monte
+    Carlo. The structural graph, roots and constraints are all dataset knowledge
+    supplied by the caller (see src/configs/), so the function works unchanged
+    for a different set of features and relationships.
     """
     generated = {}
 
@@ -63,4 +76,17 @@ def generate(df, features, causal_graph, root_variables, n_samples=1000):
             f"No generation rule for {missing} — add to root_variables or causal_graph."
         )
 
-    return pd.DataFrame(generated)[features]
+    result = pd.DataFrame(generated)[features]
+
+    if constraints:
+        # Hard feasibility projection in source units: enforces the conservation
+        # / mass-balance laws a priori so they hold exactly in the returned
+        # population (0% violations), rather than only holding on average through
+        # the fitted edges. Same projection the PI-VAE applies at generation.
+        A_src, b_src = _build_constraints(constraints, features)
+        projected = _project_constraints(result.values, A_src, b_src)
+        result = pd.DataFrame(projected, columns=features)
+        log.info("  projected generated population onto %d conservation constraint(s)",
+                 len(constraints))
+
+    return result

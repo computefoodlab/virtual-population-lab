@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 13:09 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
+_Auto-generated on 2026-09-21 17:45 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
 
 ## Objective
 
@@ -18,7 +18,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 **Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
-caller-supplied causal graph:
+caller-supplied structural graph:
 
 - Each variable in `root_variables` is drawn from its own real marginal
   distribution (assumed Gaussian).
@@ -30,9 +30,15 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-The causal structure and roots are dataset knowledge supplied by the caller
-(see src/configs/) — this function has no dataset-specific assumptions baked
-in, so it works unchanged for a different set of features and relationships.
+Where the caller supplies `constraints` — genuine conservation / mass-balance
+laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
+generated population is projected onto the feasible region with the same hard
+feasibility projection the PI-VAE uses, so those physical laws hold exactly
+(0% violations). This is what makes the engine physics-informed rather than
+only structure-informed; with no constraints it is plain structural Monte
+Carlo. The structural graph, roots and constraints are all dataset knowledge
+supplied by the caller (see src/configs/), so the function works unchanged
+for a different set of features and relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -175,7 +181,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 | Engine | Correlation Distance (Euclidean) | Mean KS Statistic |
 |---|---|---|
-| Physics-Informed Monte Carlo | 1.6927 | 0.1606 |
+| Physics-Informed Monte Carlo | 1.6928 | 0.1606 |
 | Mcmc | **0.3655** | **0.0683** |
 | Regression | 0.5819 | 0.1251 |
 | Variational Autoencoder | 0.7584 | 0.2232 |
@@ -216,11 +222,11 @@ Lower = closer to real; bold = best per feature.
 | Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
 | SSC | 0.749 | 0.855 (1.14x) | 0.788 (1.05x) | 0.794 (1.06x) | 0.900 (1.20x) | 0.826 (1.10x) |
-| Malic | 0.514 | 0.506 (0.98x) | 0.503 (0.98x) | 0.504 (0.98x) | 0.609 (1.18x) | 0.510 (0.99x) |
-| Citric | 2.470 | 2.072 (0.84x) | 1.989 (0.81x) | 2.030 (0.82x) | 2.122 (0.86x) | 2.065 (0.84x) |
-| Glutamic | 0.628 | 0.674 (1.07x) | 0.667 (1.06x) | 0.636 (1.01x) | 0.796 (1.27x) | 0.673 (1.07x) |
-| Fructose | 4.204 | 4.776 (1.14x) | 4.407 (1.05x) | 4.482 (1.07x) | 4.979 (1.18x) | 4.652 (1.11x) |
-| Glucose | 3.870 | 4.510 (1.17x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.332 (1.12x) |
+| Malic | 0.514 | 0.503 (0.98x) | 0.503 (0.98x) | 0.504 (0.98x) | 0.609 (1.18x) | 0.510 (0.99x) |
+| Citric | 2.470 | 2.060 (0.83x) | 1.989 (0.81x) | 2.030 (0.82x) | 2.122 (0.86x) | 2.065 (0.84x) |
+| Glutamic | 0.628 | 0.671 (1.07x) | 0.667 (1.06x) | 0.636 (1.01x) | 0.796 (1.27x) | 0.673 (1.07x) |
+| Fructose | 4.204 | 4.764 (1.13x) | 4.407 (1.05x) | 4.482 (1.07x) | 4.979 (1.18x) | 4.652 (1.11x) |
+| Glucose | 3.870 | 4.487 (1.16x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.332 (1.12x) |
 
 ## Generalization Check
 
@@ -228,7 +234,7 @@ Correlation distance for each engine's synthetic data against the train split it
 
 | Engine | Correlation Dist. (vs. Train) | Correlation Dist. (vs. Test) | Gap |
 |---|---|---|---|
-| Physics-Informed Monte Carlo | 1.5823 | 1.6927 | 0.1104 |
+| Physics-Informed Monte Carlo | 1.5823 | 1.6928 | 0.1105 |
 | Mcmc | 0.4961 | 0.3655 | 0.1306 |
 | Regression | 0.4597 | 0.5819 | 0.1222 |
 | Variational Autoencoder | 0.5512 | 0.7584 | 0.2073 |

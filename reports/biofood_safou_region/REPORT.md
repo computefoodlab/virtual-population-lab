@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 13:11 from `biofood_safou_region`. Re-run `make run CONFIG=biofood_safou_region` to refresh._
+_Auto-generated on 2026-09-21 17:46 from `biofood_safou_region`. Re-run `make run CONFIG=biofood_safou_region` to refresh._
 
 ## Objective
 
@@ -18,7 +18,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 **Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
-caller-supplied causal graph:
+caller-supplied structural graph:
 
 - Each variable in `root_variables` is drawn from its own real marginal
   distribution (assumed Gaussian).
@@ -30,9 +30,15 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-The causal structure and roots are dataset knowledge supplied by the caller
-(see src/configs/) — this function has no dataset-specific assumptions baked
-in, so it works unchanged for a different set of features and relationships.
+Where the caller supplies `constraints` — genuine conservation / mass-balance
+laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
+generated population is projected onto the feasible region with the same hard
+feasibility projection the PI-VAE uses, so those physical laws hold exactly
+(0% violations). This is what makes the engine physics-informed rather than
+only structure-informed; with no constraints it is plain structural Monte
+Carlo. The structural graph, roots and constraints are all dataset knowledge
+supplied by the caller (see src/configs/), so the function works unchanged
+for a different set of features and relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -175,7 +181,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 | Engine | Correlation Distance (Euclidean) | Mean KS Statistic |
 |---|---|---|
-| Physics-Informed Monte Carlo | **0.3507** | **0.2492** |
+| Physics-Informed Monte Carlo | **0.3348** | **0.2489** |
 | Mcmc | 0.5002 | 0.2706 |
 | Regression | 0.5838 | 0.2924 |
 | Variational Autoencoder | 0.5959 | 0.3090 |
@@ -185,8 +191,8 @@ capacity, collapse, and early-stopping trade-offs.
 
 ## Findings
 
-- Best **Correlation Distance (Euclidean)**: Physics-Informed Monte Carlo (0.3507)
-- Best **Mean KS Statistic**: Physics-Informed Monte Carlo (0.2492)
+- Best **Correlation Distance (Euclidean)**: Physics-Informed Monte Carlo (0.3348)
+- Best **Mean KS Statistic**: Physics-Informed Monte Carlo (0.2489)
 
 Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat / higher p_value = closer):
 
@@ -205,7 +211,7 @@ Lower = closer to real; bold = best per feature.
 | Water | **0.2535** | 0.3013 | 0.2984 | 0.3355 | 0.3353 |
 | Fat | **0.2485** | 0.2793 | 0.2834 | 0.3355 | 0.2993 |
 | Palmitic | **0.2385** | 0.2634 | 0.2715 | 0.3175 | 0.2934 |
-| Stearic | 0.2562 | **0.2383** | 0.3163 | 0.2473 | 0.2563 |
+| Stearic | 0.2552 | **0.2383** | 0.3163 | 0.2473 | 0.2563 |
 
 ## Feature Spread Comparison
 
@@ -213,10 +219,10 @@ Lower = closer to real; bold = best per feature.
 
 | Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
-| Water | 11.395 | 10.014 (0.88x) | 9.501 (0.83x) | 9.431 (0.83x) | 7.627 (0.67x) | 9.456 (0.83x) |
-| Fat | 10.947 | 9.707 (0.89x) | 9.295 (0.85x) | 9.346 (0.85x) | 7.064 (0.65x) | 9.155 (0.84x) |
-| Palmitic | 4.135 | 3.883 (0.94x) | 3.685 (0.89x) | 3.699 (0.89x) | 2.796 (0.68x) | 3.684 (0.89x) |
-| Stearic | 0.168 | 0.230 (1.37x) | 0.216 (1.28x) | 0.218 (1.30x) | 0.170 (1.01x) | 0.220 (1.31x) |
+| Water | 11.395 | 9.915 (0.87x) | 9.501 (0.83x) | 9.431 (0.83x) | 7.627 (0.67x) | 9.456 (0.83x) |
+| Fat | 10.947 | 9.144 (0.84x) | 9.295 (0.85x) | 9.346 (0.85x) | 7.064 (0.65x) | 9.155 (0.84x) |
+| Palmitic | 4.135 | 3.612 (0.87x) | 3.685 (0.89x) | 3.699 (0.89x) | 2.796 (0.68x) | 3.684 (0.89x) |
+| Stearic | 0.168 | 0.215 (1.28x) | 0.216 (1.28x) | 0.218 (1.30x) | 0.170 (1.01x) | 0.220 (1.31x) |
 
 ## Generalization Check
 
@@ -224,7 +230,7 @@ Correlation distance for each engine's synthetic data against the train split it
 
 | Engine | Correlation Dist. (vs. Train) | Correlation Dist. (vs. Test) | Gap |
 |---|---|---|---|
-| Physics-Informed Monte Carlo | 0.1074 | 0.3507 | 0.2433 |
+| Physics-Informed Monte Carlo | 0.1234 | 0.3348 | 0.2114 |
 | Mcmc | 0.1410 | 0.5002 | 0.3592 |
 | Regression | 0.2864 | 0.5838 | 0.2974 |
 | Variational Autoencoder | 0.1702 | 0.5959 | 0.4257 |
@@ -236,7 +242,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 
 | Engine | Coverage @ 90% (nominal 0.90) | Calibration Error |
 |---|---|---|
-| Physics-Informed Monte Carlo | 0.962 | 0.1226 |
+| Physics-Informed Monte Carlo | 0.962 | 0.1247 |
 | Mcmc | 0.865 | **0.0989** |
 | Regression | 0.904 | 0.1276 |
 | Variational Autoencoder | 0.673 | 0.1960 |
