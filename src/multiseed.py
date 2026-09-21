@@ -49,26 +49,59 @@ log = logging.getLogger("vp-lab")
 
 OUT = "results/_summary"
 
-DEFAULT_CONFIGS = ["apple_quality", "banana_quality", "biofood_date_region",
-                   "biofood_safou_region", "mango_composition"]
+DEFAULT_CONFIGS = ["citrus_exp6", "tomato_nir", "grape_berry", "apple_samnegard",
+                   "mango_composition", "biofood_safou_region"]
 DATASET_LABEL = {
-    "apple_quality": "Apple (quality)",
-    "banana_quality": "Banana (quality)",
-    "biofood_date_region": "Date (nutrients)",
-    "biofood_safou_region": "Safou (nutrients)",
+    "citrus_exp6": "Citrus (oranges)",
+    "tomato_nir": "Tomato",
+    "grape_berry": "Grape berry",
+    "apple_samnegard": "Apple",
     "mango_composition": "Mango (Vit C)",
+    "biofood_safou_region": "Safou (nutrients)",
 }
-ENGINES = ["physics_mc", "regression", "vae", "hybrid_vae"]
-ENGINE_NAME = {"physics_mc": "Physics-MC", "regression": "Regression",
-               "vae": "VAE", "hybrid_vae": "Physics-VAE"}
+ENGINES = ["physics_mc", "mcmc", "regression", "vae", "hybrid_vae"]
+ENGINE_NAME = {"physics_mc": "Physics-MC", "mcmc": "MCMC (prior-art)",
+               "regression": "Regression", "vae": "VAE", "hybrid_vae": "PI-VAE"}
 # metric key -> (display, "lower is better"?)
 METRICS = {
     "corr_dist": ("Corr. dist.", True),
     "mean_ks": ("Mean KS", True),
+    "energy_dist": ("Energy dist.", True),
+    "mmd": ("MMD", True),
     "calib_err": ("Calib. err.", True),
     "coverage_at_90": ("Coverage@90", None),   # target is nominal 0.90, not min/max
     "tstr_acc": ("TSTR acc.", False),
 }
+
+
+def _standardize(real_df, gen_df, features):
+    mu = real_df[features].mean().values
+    sd = real_df[features].std().values
+    sd = np.where(sd > 1e-9, sd, 1.0)
+    return (real_df[features].values - mu) / sd, (gen_df[features].values - mu) / sd
+
+
+def energy_distance(real_df, gen_df, features, cap=500, seed=0):
+    """Multivariate two-sample energy distance on z-scored features (captures
+    joint structure beyond pairwise correlation). Lower = closer."""
+    from scipy.spatial.distance import cdist
+    a, b = _standardize(real_df, gen_df, features)
+    if len(b) > cap:
+        b = b[np.random.default_rng(seed).choice(len(b), cap, replace=False)]
+    return float(2 * cdist(a, b).mean() - cdist(a, a).mean() - cdist(b, b).mean())
+
+
+def mmd_rbf(real_df, gen_df, features, cap=500, seed=0):
+    """RBF-kernel MMD^2 (median-heuristic bandwidth) on z-scored features."""
+    from scipy.spatial.distance import cdist, pdist
+    a, b = _standardize(real_df, gen_df, features)
+    if len(b) > cap:
+        b = b[np.random.default_rng(seed).choice(len(b), cap, replace=False)]
+    sigma = np.median(pdist(np.vstack([a, b]))) or 1.0
+    g = 1.0 / (2 * sigma ** 2)
+    return float(np.exp(-g * cdist(a, a) ** 2).mean()
+                 + np.exp(-g * cdist(b, b) ** 2).mean()
+                 - 2 * np.exp(-g * cdist(a, b) ** 2).mean())
 
 
 def _one_seed(config, seed):
@@ -96,6 +129,10 @@ def _one_seed(config, seed):
                      "value": correlation_euclidean_dist(test_df, generated[e], config.FEATURES)})
         recs.append({"engine": e, "metric": "mean_ks",
                      "value": float(ks.loc[ks.method == e, "ks_stat"].mean())})
+        recs.append({"engine": e, "metric": "energy_dist",
+                     "value": energy_distance(test_df, generated[e], config.FEATURES, seed=seed)})
+        recs.append({"engine": e, "metric": "mmd",
+                     "value": mmd_rbf(test_df, generated[e], config.FEATURES, seed=seed)})
         recs.append({"engine": e, "metric": "coverage_at_90", "value": float(cov.loc[e, "coverage_at_90"])})
         recs.append({"engine": e, "metric": "calib_err", "value": float(cov.loc[e, "calibration_error"])})
 

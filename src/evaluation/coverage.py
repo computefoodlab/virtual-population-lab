@@ -38,6 +38,63 @@ def _central_coverage(generated_values, real_values, level):
     return float(np.mean((real_values >= lo) & (real_values <= hi)))
 
 
+def _conformal_interval(generated_values, cal_values, level):
+    """
+    Split-conformal recalibration of the generated central interval. Start from
+    the generated [lo, hi] at `level`, compute the conformity score
+    s_i = max(lo - x_i, x_i - hi) on a real CALIBRATION set (positive outside the
+    interval, negative inside), take its finite-sample (1+1/n)-adjusted `level`
+    quantile q, and widen the interval to [lo - q, hi + q]. Under exchangeability
+    of the calibration and evaluation points this guarantees marginal coverage
+    >= level on held-out real data — the standard distribution-free fix for the
+    in-distribution under-coverage the plain generated interval can show. Needs an
+    adequately sized calibration set; at very small n (e.g. safou, n=41) the
+    finite-sample quantile is unstable and the widening can over/under-correct.
+    """
+    lo = np.quantile(generated_values, (1 - level) / 2)
+    hi = np.quantile(generated_values, (1 + level) / 2)
+    cal = np.asarray(cal_values, dtype=float)
+    if cal.size == 0:
+        return lo, hi
+    scores = np.maximum(lo - cal, cal - hi)
+    n = cal.size
+    k = min(n, int(np.ceil((n + 1) * level)))
+    q = np.sort(scores)[k - 1]
+    return lo - q, hi + q
+
+
+def conformal_coverage_metrics(generated, cal_df, eval_df, features, levels=LEVELS):
+    """
+    Like `coverage_metrics`, but each per-feature interval is conformally
+    recalibrated on `cal_df` (a real calibration split) before coverage is
+    measured on `eval_df` (a disjoint real evaluation split). Returns coverage at
+    the headline level and the mean-absolute calibration error across `levels`.
+    Report alongside the un-recalibrated numbers to show the in-distribution
+    calibration that conformal recovers (and where small n prevents it).
+    """
+    rows = []
+    for name, gen_df in generated.items():
+        headline, cal_errors = [], []
+        for feature in features:
+            gen_values = gen_df[feature].values
+            cal_values = cal_df[feature].values
+            eval_values = eval_df[feature].values
+            lo, hi = _conformal_interval(gen_values, cal_values, HEADLINE_LEVEL)
+            headline.append(float(np.mean((eval_values >= lo) & (eval_values <= hi))))
+            errs = []
+            for level in levels:
+                lo, hi = _conformal_interval(gen_values, cal_values, level)
+                emp = float(np.mean((eval_values >= lo) & (eval_values <= hi)))
+                errs.append(abs(emp - level))
+            cal_errors.append(np.mean(errs))
+        rows.append({
+            "method": name,
+            "coverage_at_90": np.mean(headline),
+            "calibration_error": np.mean(cal_errors),
+        })
+    return pd.DataFrame(rows)
+
+
 def coverage_metrics(generated, real_df, features, levels=LEVELS):
     """
     Per engine: mean coverage at the headline level (nominal HEADLINE_LEVEL, so

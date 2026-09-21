@@ -100,7 +100,7 @@ def generate(
     spurious early stop.
 
     `hidden_dim` and `dropout` control model capacity — the defaults (128,
-    0.0) fit apple_quality's 2800 rows comfortably, but on a small dataset
+    0.0) fit a few-thousand-row dataset comfortably, but on a small dataset
     (dozens to low hundreds of rows) that many parameters can memorize
     training noise instead of generalizing. Shrink `hidden_dim` and/or add
     dropout (e.g. 0.1-0.3) if the generalization check shows a large

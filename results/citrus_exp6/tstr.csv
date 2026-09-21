@@ -1,0 +1,7 @@
+method,accuracy,roc_auc
+real,1.0,1.0
+physics_mc,1.0,1.0
+mcmc,0.9722222222222222,1.0
+regression,1.0,1.0
+vae,1.0,1.0
+hybrid_vae,1.0,1.0
