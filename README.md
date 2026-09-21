@@ -31,7 +31,13 @@ abbreviations as follows:
 1. **Structural / physics-informed Monte Carlo (PI-MC)** — ancestral sampling
    over a supplied structural graph. Root variables are drawn from their real
    marginals; each (parent → child) edge is fit as a linear-Gaussian conditional
-   on the training data. Forward sampling is exact, with no Markov chains.
+   on the training data. Forward sampling is exact, with no Markov chains. Where
+   a config supplies `CONSTRAINTS` (a genuine conservation / mass-balance law,
+   not a fitted relation), the generated population is projected onto the
+   feasible region a priori so that law holds exactly (0% violations) — the same
+   hard projection the PI-VAE uses; this is what makes the engine
+   physics-informed rather than only structure-informed. With no constraints it
+   is plain structural Monte Carlo.
 
 2. **Gaussian-copula Monte Carlo (MCMC)** — the domain prior art for virtual
    food populations: correlated, non-Gaussian parameters are drawn by

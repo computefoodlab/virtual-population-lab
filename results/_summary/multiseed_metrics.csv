@@ -1,8 +1,8 @@
 dataset,config,engine,metric,mean,std,n,values
-Citrus (oranges),citrus_exp6,physics_mc,corr_dist,2.5268,0.0913,5,2.5204;2.3796;2.5343;2.6213;2.5783
-Citrus (oranges),citrus_exp6,physics_mc,mean_ks,0.1958,0.0084,5,0.1971;0.1831;0.2060;0.1935;0.1992
-Citrus (oranges),citrus_exp6,physics_mc,energy_dist,0.1663,0.0411,5,0.1456;0.1224;0.2313;0.1756;0.1566
-Citrus (oranges),citrus_exp6,physics_mc,mmd,0.0264,0.0059,5,0.0246;0.0179;0.0332;0.0258;0.0303
+Citrus (oranges),citrus_exp6,physics_mc,corr_dist,2.5243,0.0906,5,2.5288;2.3755;2.5266;2.6121;2.5787
+Citrus (oranges),citrus_exp6,physics_mc,mean_ks,0.1946,0.0092,5,0.1971;0.1831;0.2060;0.1875;0.1992
+Citrus (oranges),citrus_exp6,physics_mc,energy_dist,0.1784,0.0466,5,0.1581;0.1358;0.2575;0.1771;0.1637
+Citrus (oranges),citrus_exp6,physics_mc,mmd,0.032,0.007,5,0.0301;0.0229;0.0417;0.0296;0.0354
 Citrus (oranges),citrus_exp6,physics_mc,coverage_at_90,0.9033,0.032,5,0.8778;0.9111;0.9417;0.9222;0.8639
 Citrus (oranges),citrus_exp6,physics_mc,calib_err,0.0959,0.0119,5,0.0892;0.0876;0.0959;0.0905;0.1164
 Citrus (oranges),citrus_exp6,mcmc,corr_dist,0.6207,0.2892,5,0.4440;0.3054;0.4991;0.9039;0.9508
@@ -35,10 +35,10 @@ Citrus (oranges),citrus_exp6,regression,tstr_acc,0.9806,0.0158,5,0.9861;0.9722;0
 Citrus (oranges),citrus_exp6,vae,tstr_acc,0.975,0.0116,5,0.9861;0.9583;0.9722;0.9861;0.9722
 Citrus (oranges),citrus_exp6,hybrid_vae,tstr_acc,0.9861,0.0098,5,0.9861;0.9861;0.9722;1.0000;0.9861
 Citrus (oranges),citrus_exp6,real,tstr_acc,0.9833,0.0116,5,0.9861;0.9722;0.9722;1.0000;0.9861
-Tomato,tomato_nir,physics_mc,corr_dist,1.6122,0.0282,5,1.5709;1.5961;1.6393;1.6307;1.6238
+Tomato,tomato_nir,physics_mc,corr_dist,1.6112,0.0271,5,1.5707;1.5974;1.6348;1.6330;1.6200
 Tomato,tomato_nir,physics_mc,mean_ks,0.1223,0.023,5,0.1111;0.1238;0.1607;0.1149;0.1007
-Tomato,tomato_nir,physics_mc,energy_dist,0.0978,0.049,5,0.0788;0.0928;0.1834;0.0676;0.0664
-Tomato,tomato_nir,physics_mc,mmd,0.0149,0.0076,5,0.0117;0.0153;0.0277;0.0111;0.0085
+Tomato,tomato_nir,physics_mc,energy_dist,0.0977,0.049,5,0.0790;0.0926;0.1833;0.0675;0.0660
+Tomato,tomato_nir,physics_mc,mmd,0.0149,0.0076,5,0.0118;0.0152;0.0277;0.0111;0.0085
 Tomato,tomato_nir,physics_mc,coverage_at_90,0.9332,0.0138,5,0.9274;0.9231;0.9573;0.9265;0.9316
 Tomato,tomato_nir,physics_mc,calib_err,0.0372,0.0123,5,0.0316;0.0355;0.0585;0.0268;0.0337
 Tomato,tomato_nir,mcmc,corr_dist,0.648,0.2173,5,0.6338;0.9799;0.6944;0.3948;0.5368
@@ -173,12 +173,12 @@ Mango (Vit C),mango_composition,hybrid_vae,energy_dist,0.0631,0.0458,5,0.0438;0.
 Mango (Vit C),mango_composition,hybrid_vae,mmd,0.0106,0.0088,5,0.0076;0.0084;0.0045;0.0066;0.0262
 Mango (Vit C),mango_composition,hybrid_vae,coverage_at_90,0.8976,0.0098,5,0.8869;0.9107;0.9048;0.8929;0.8929
 Mango (Vit C),mango_composition,hybrid_vae,calib_err,0.0468,0.0097,5,0.0464;0.0360;0.0390;0.0593;0.0531
-Safou (nutrients),biofood_safou_region,physics_mc,corr_dist,0.3173,0.2054,5,0.1548;0.1218;0.2479;0.4681;0.5940
-Safou (nutrients),biofood_safou_region,physics_mc,mean_ks,0.2536,0.0712,5,0.1919;0.1910;0.2252;0.3370;0.3230
-Safou (nutrients),biofood_safou_region,physics_mc,energy_dist,0.259,0.1536,5,0.1209;0.1538;0.1724;0.4578;0.3901
-Safou (nutrients),biofood_safou_region,physics_mc,mmd,0.0402,0.0262,5,0.0194;0.0232;0.0211;0.0735;0.0638
+Safou (nutrients),biofood_safou_region,physics_mc,corr_dist,0.3276,0.2012,5,0.1696;0.1278;0.2761;0.4588;0.6055
+Safou (nutrients),biofood_safou_region,physics_mc,mean_ks,0.2546,0.0709,5,0.1919;0.1948;0.2249;0.3372;0.3245
+Safou (nutrients),biofood_safou_region,physics_mc,energy_dist,0.2501,0.1499,5,0.1200;0.1419;0.1655;0.4427;0.3803
+Safou (nutrients),biofood_safou_region,physics_mc,mmd,0.043,0.0297,5,0.0210;0.0241;0.0196;0.0806;0.0699
 Safou (nutrients),biofood_safou_region,physics_mc,coverage_at_90,0.9615,0.0136,5,0.9615;0.9423;0.9808;0.9615;0.9615
-Safou (nutrients),biofood_safou_region,physics_mc,calib_err,0.1029,0.0333,5,0.0744;0.0783;0.0968;0.1572;0.1077
+Safou (nutrients),biofood_safou_region,physics_mc,calib_err,0.1052,0.0333,5,0.0734;0.0815;0.1011;0.1582;0.1120
 Safou (nutrients),biofood_safou_region,mcmc,corr_dist,0.2738,0.175,5,0.1487;0.2143;0.1803;0.2455;0.5800
 Safou (nutrients),biofood_safou_region,mcmc,mean_ks,0.2831,0.0677,5,0.2327;0.2883;0.2095;0.3831;0.3020
 Safou (nutrients),biofood_safou_region,mcmc,energy_dist,0.3588,0.2381,5,0.1344;0.3264;0.1378;0.6768;0.5184

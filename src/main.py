@@ -107,6 +107,7 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
         _seed()
         out = {"physics_mc": physics_mc_generator.generate(
             source_df, fx, config.CAUSAL_GRAPH, config.ROOT_VARIABLES, n_samples=n_samples,
+            constraints=getattr(config, "CONSTRAINTS", None),
         )}
         _seed()
         # Correlation-preserving MCMC prior-art baseline (Onwude 2022 / Hertog 2009).

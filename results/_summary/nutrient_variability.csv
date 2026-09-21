@@ -1,0 +1,4 @@
+commodity,nutrient_class,fold,cv,ks_single_average,ks_vfp
+mango_composition,vitamin (Vitamin C),4.25,0.32,0.5595,0.0893
+grape_berry,"minerals (K, Mg, Ca)",142.7,0.788,0.7498,0.0634
+biofood_safou_region,"fatty acids (fat, palmitic, stearic)",316.47,0.707,0.5983,0.2519
