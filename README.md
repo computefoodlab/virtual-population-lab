@@ -55,15 +55,18 @@ abbreviations as follows:
    the standard normal, `beta` annealed over the first `kl_warmup_frac` of
    training) and a covariance-matching term (`cov_weight`).
 
-5. **Physics-informed VAE (PI-VAE)** — the VAE above plus a structural/physics
-   consistency term on the graph edges, a marginal-matching term, and an
-   empirical-copula calibration post-step; where a governing physical law holds,
-   a conservation/compositional constraint is imposed a priori (soft penalty plus
-   a hard feasibility projection at generation). A conditional variant
+5. **Physics-informed VAE (PI-VAE)** — the VAE above plus, where a governing
+   physical law holds, a conservation/compositional constraint imposed a priori
+   (soft penalty plus a hard feasibility projection at generation), a
+   marginal-matching term, and an empirical-copula calibration post-step. The
+   imposed physics is the conservation law only; feature dependence for which no
+   law exists is learned by the VAE from data (covariance matching), **not**
+   imposed as a fitted parent–child edge — the data-fitted edge-consistency term
+   is disabled (`VAE_PHYSICS_WEIGHT = 0`), since removing it left fidelity
+   unchanged or slightly better on all six datasets. A conditional variant
    ([src/generators/mechanistic_cvae.py](src/generators/mechanistic_cvae.py))
-   conditions generation on a covariate (e.g. storage temperature and duration)
-   for the digital-twin decision. `physics_weight = 0` recovers a calibrated VAE;
-   an empty graph makes the physics term zero.
+   conditions generation on storage temperature and duration and on the
+   commodity's published kinetic equations for the digital-twin decision.
 
 Each generator module exposes a single `generate(...)` function with a
 consistent calling convention.

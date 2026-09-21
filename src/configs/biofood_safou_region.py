@@ -60,7 +60,7 @@ RUN_TSTR = False
 # tail (it otherwise emits negative fat in the lean-fruit region). Margins are
 # therefore real rather than purely learned.
 VAE_CALIBRATE_MARGINALS = True
-VAE_PHYSICS_WEIGHT = 3.0
+VAE_PHYSICS_WEIGHT = 0.0
 
 # Covariance-matching term off here. The 4 features are already pinned by the
 # near-deterministic physics edges (r 0.76-0.99), and a 4x4 sample covariance

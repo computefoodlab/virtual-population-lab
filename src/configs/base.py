@@ -113,7 +113,7 @@ VAE_COV_WEIGHT = 1.0
 # spread — so the VAE is pushed onto the same mechanism the physics-informed
 # Monte Carlo generator samples, without collapsing feature variance. Set to
 # 0.0 to make the physics-informed VAE behave identically to the plain VAE.
-VAE_PHYSICS_WEIGHT = 1.0
+VAE_PHYSICS_WEIGHT = 0.0
 
 # Weight on the marginal-matching loss term, used only by the
 # physics-informed VAE. The per-feature 1D Wasserstein distance between
