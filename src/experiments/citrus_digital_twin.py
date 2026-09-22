@@ -194,9 +194,8 @@ def run():
     # method against the true fraction, per storage condition, at a representative
     # tolerance -- so the table reads "true 31%, single 0%, bootstrap 24%, VFP 29%",
     # rather than merely "VFP has the lowest error".
-    PC_THR = 25
-    pc = (allr[allr.thr == PC_THR]
-          .groupby(["T", "Dur"])
+    pc = (allr
+          .groupby(["thr", "T", "Dur"])
           .agg(true_pct=("true", "mean"), single_pct=("single_frac", "mean"),
                bootstrap_pct=("boot_frac", "mean"), vfp_pct=("vfp_frac", "mean"))
           .reset_index())
@@ -205,14 +204,19 @@ def run():
     pc["single_abs_err_pct"] = (pc["single_pct"] - pc["true_pct"]).abs().round(1)
     pc["bootstrap_abs_err_pct"] = (pc["bootstrap_pct"] - pc["true_pct"]).abs().round(1)
     pc["vfp_abs_err_pct"] = (pc["vfp_pct"] - pc["true_pct"]).abs().round(1)
-    print(f"\noperational consequence at the {PC_THR}% CI tolerance "
-          f"(predicted at-risk fraction vs true, per storage condition, mean over seeds):\n")
-    print(f"{'T':>5}{'Dur':>6}{'true%':>8}{'single%':>9}{'boot%':>8}{'VFP%':>8}")
-    for _, r in pc.iterrows():
-        print(f"{r['T']:>5.0f}{r['Dur']:>6.0f}{r['true_pct']:>8.1f}"
-              f"{r['single_pct']:>9.1f}{r['bootstrap_pct']:>8.1f}{r['vfp_pct']:>8.1f}")
+    # per-condition winner (smallest absolute error) at each threshold
+    err = pc[["single_abs_err_pct", "bootstrap_abs_err_pct", "vfp_abs_err_pct"]].values
+    names = np.array(["single", "bootstrap", "vfp"])
+    pc["closest"] = names[err.argmin(axis=1)]
+    for thr in THRESHOLDS:
+        sub = pc[pc.thr == thr]
+        wins = sub["closest"].value_counts().to_dict()
+        risky = sub[sub.true_pct >= 20]
+        wins_risky = risky["closest"].value_counts().to_dict()
+        print(f"\n[{thr}% tolerance] per-condition winner counts (of {len(sub)}): {wins}")
+        print(f"   on the {len(risky)} conditions with true risk >= 20%: {wins_risky}")
     pc.to_csv(f"{OUT}/citrus_digital_twin_percondition.csv", index=False)
-    print(f"\nwrote: {OUT}/citrus_digital_twin_percondition.csv")
+    print(f"\nwrote: {OUT}/citrus_digital_twin_percondition.csv (all thresholds)")
 
 
 if __name__ == "__main__":

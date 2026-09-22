@@ -58,17 +58,29 @@ def run(cfg_name, ref_group):
             for i in range(N_DRIFT)])
         pop_shift = energy_distance(ref, cand, F, seed=SEED0)  # full-population shift
         rows.append((g, score, score > thr, pop_shift))
+    out = []
     for g, s, flag, shift in sorted(rows, key=lambda r: r[3]):
         tag = "DRIFT" if flag else "ok"
         mark = "  <- reference" if g == ref_group else ""
         print(f"{str(g):<16}{s:>12.3f}{tag:>8}{shift:>16.3f}{mark}")
+        out.append({"dataset": cfg_name, "reference": ref_group, "incoming_population": g,
+                    "drift_score": round(float(s), 4), "flag": tag,
+                    "true_pop_shift": round(float(shift), 4),
+                    "alarm_threshold": round(float(thr), 4),
+                    "null_mean": round(float(null.mean()), 4)})
+    return out
 
 
 def main():
+    import pandas as pd
+    allrows = []
     for cfg_name, ref in CASES:
-        run(cfg_name, ref)
+        allrows += run(cfg_name, ref)
+    os.makedirs("results/_summary", exist_ok=True)
+    pd.DataFrame(allrows).to_csv("results/_summary/drift_detection.csv", index=False)
     print("\n(same-population batch stays below threshold = no false alarm; drift "
           "scores exceed it and scale with the true shift = severity-graded trigger.)")
+    print("wrote: results/_summary/drift_detection.csv")
 
 
 if __name__ == "__main__":

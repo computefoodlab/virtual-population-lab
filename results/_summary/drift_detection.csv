@@ -1,0 +1,12 @@
+dataset,reference,incoming_population,drift_score,flag,true_pop_shift,alarm_threshold,null_mean
+tomato_nir,ProcessingN,ProcessingN,0.0979,ok,0.0,0.2754,0.1697
+tomato_nir,ProcessingN,ProcessingE,1.5221,DRIFT,1.3059,0.2754,0.1697
+tomato_nir,ProcessingN,MidSized,3.0473,DRIFT,2.7916,0.2754,0.1697
+tomato_nir,ProcessingN,Landrace,3.786,DRIFT,3.7362,0.2754,0.1697
+tomato_nir,ProcessingN,Cherry,6.9333,DRIFT,7.0338,0.2754,0.1697
+grape_berry,Grenache,Grenache,0.0859,ok,0.0,0.1943,0.0939
+grape_berry,Grenache,G14,0.4939,DRIFT,0.44,0.1943,0.0939
+grape_berry,Grenache,Merlot,0.5795,DRIFT,0.5079,0.1943,0.0939
+grape_berry,Grenache,G7,0.6909,DRIFT,0.6338,0.1943,0.0939
+grape_berry,Grenache,Morrastel,0.8269,DRIFT,0.7468,0.1943,0.0939
+grape_berry,Grenache,G5,0.9125,DRIFT,0.8782,0.1943,0.0939
