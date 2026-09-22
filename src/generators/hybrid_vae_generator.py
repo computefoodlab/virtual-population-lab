@@ -393,7 +393,13 @@ def generate(
     capacity, collapse, and early-stopping trade-offs.
     """
     x = np.asarray(x, dtype=np.float32)
-    if edge_constants is not None:
+    if physics_weight <= 0:
+        # Edge-consistency term disabled (default): skip fitting the structural
+        # edges entirely, since they would only be multiplied by a zero weight.
+        # The PI-VAE's imposed physics is the conservation constraint below, not
+        # these data-fitted edges. _physics_loss returns 0 for an empty edge set.
+        edges = []
+    elif edge_constants is not None:
         # Use edge parameters specified a priori (e.g. from literature/mechanism)
         # instead of fitting slope/intercept/residual from the observed data. This
         # makes the structural term genuinely mechanism-informed, not self-fitted.
