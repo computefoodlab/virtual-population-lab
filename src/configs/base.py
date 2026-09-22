@@ -26,15 +26,24 @@ LABEL_COLUMN = ""
 # The continuous columns every generator models.
 FEATURES = []
 
-# Root variables for the physics-informed Monte Carlo generator: no parent
-# in the causal graph, sampled directly from their own real marginal
+# Root variables for the structural Monte Carlo generator: no parent
+# in the structural graph, sampled directly from their own real marginal
 # distribution.
 ROOT_VARIABLES = []
 
-# Assumed causal chain: each (parent, child) edge means `child` is generated
+# Assumed structural graph: each (parent, child) edge means `child` is generated
 # from parent's fitted linear relationship plus calibrated residual noise.
-# This is the one piece of real domain knowledge in the pipeline. Every
-# parent must appear in ROOT_VARIABLES or as a child earlier in this list.
+# The edges are ESTIMATED FROM OBSERVATIONAL DATA (ordinary least squares), so
+# they encode conditional relationships, not identified causal effects — the
+# direction of each arrow is an analyst's modelling assumption, not something
+# the data can establish. With linear fits and Gaussian residuals a reversed
+# edge implies the same joint distribution, so direction is not identifiable
+# here. Ancestral sampling only needs a valid factorization of the joint, which
+# any topological ordering supplies, so nothing downstream depends on the
+# edges being causal. This is the one piece of domain knowledge supplied to the
+# pipeline. Every parent must appear in ROOT_VARIABLES or as a child earlier in
+# this list. (The field keeps the name CAUSAL_GRAPH for backward
+# compatibility; it encodes the structural graph.)
 CAUSAL_GRAPH = []
 
 # Categorical column to use for the leave-one-group-out transfer experiment
@@ -55,7 +64,7 @@ IS_PRE_SCALED = False
 # --- Pipeline mechanics — sensible defaults, override only if tuning calls for it ---
 
 # Fraction of the data held out as the "real" individuals every metric is scored
-# against. Never used for fitting, calibration, or causal-edge estimation.
+# against. Never used for fitting, calibration, or structural-edge estimation.
 TEST_SIZE = 0.3
 
 # Whether to run the Train-on-Synthetic/Test-on-Real downstream-utility check
@@ -72,7 +81,7 @@ N_SAMPLES = 1000
 RANDOM_SEED = 48
 
 # VAE latent dimensionality — a reasonable starting point; tune per dataset
-# if the causal structure has more independent noise sources than this.
+# if the structural graph has more independent noise sources than this.
 LATENT_DIM = 4
 
 # VAE training epochs and final KL weight (beta) — beta is linearly annealed
@@ -110,16 +119,17 @@ VAE_COV_WEIGHT = 1.0
 # physics-informed VAE (hybrid_vae_generator). Penalizes reconstructed
 # batches that violate the fitted linear-Gaussian relationship on each
 # CAUSAL_GRAPH edge — matching its slope, intercept, and real residual
-# spread — so the VAE is pushed onto the same mechanism the physics-informed
-# Monte Carlo generator samples, without collapsing feature variance. Set to
+# spread — so the VAE is pushed onto the same fitted conditionals the
+# structural Monte Carlo generator samples, without collapsing feature
+# variance. Set to
 # 0.0 to make the physics-informed VAE behave identically to the plain VAE.
 VAE_PHYSICS_WEIGHT = 0.0
 
 # Weight on the marginal-matching loss term, used only by the
 # physics-informed VAE. The per-feature 1D Wasserstein distance between
 # samples drawn from the prior and the real batch — the differentiable
-# analogue of the KS statistic. The physics term constrains only causal
-# edges, so the graph's root variables (which physics-MC samples directly
+# analogue of the KS statistic. The physics term constrains only structural
+# edges, so the graph's root variables (which the SMC engine samples directly
 # from their real marginal) tend to get compressed by the VAE; this term
 # shapes every generated feature's full distribution onto real, roots
 # included. Set to 0.0 to disable.

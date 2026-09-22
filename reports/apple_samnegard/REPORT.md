@@ -15,7 +15,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 
 ## Methodology
 
-**Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
+**Structural Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
 caller-supplied structural graph:
@@ -30,15 +30,17 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-Where the caller supplies `constraints` — genuine conservation / mass-balance
-laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
-generated population is projected onto the feasible region with the same hard
-feasibility projection the PI-VAE uses, so those physical laws hold exactly
-(0% violations). This is what makes the engine physics-informed rather than
-only structure-informed; with no constraints it is plain structural Monte
-Carlo. The structural graph, roots and constraints are all dataset knowledge
-supplied by the caller (see src/configs/), so the function works unchanged
-for a different set of features and relationships.
+This is the Structural Monte Carlo (SMC) baseline: its parent-child edges are
+data-fitted structural priors, not physics. Where the caller supplies
+`constraints` — genuine conservation / mass-balance laws  sum_i w_i x_i <= bound
+in source units, not fitted from data — the generated population is projected
+onto the feasible region with the same hard feasibility projection the PI-VAE
+uses, so those physical laws hold exactly (0% violations). The term
+physics-informed is reserved for the PI-VAE; here the conservation projection is
+an added constraint on a structural baseline. The structural graph, roots and
+constraints are all dataset knowledge supplied by the caller (see src/configs/),
+so the function works unchanged for a different set of features and
+relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -126,14 +128,14 @@ that happens.
 **Physics-Informed VAE** (`src.generators.hybrid_vae_generator.generate`)
 
 The physics-informed VAE (PI-VAE): the same generative model as the plain
-VAE, plus a physics-consistency loss that injects the caller-supplied causal
+VAE, plus a physics-consistency loss that injects the caller-supplied structural
 graph into training. It keeps the VAE's data-driven strengths (a learned
 latent joint, novel-individual sampling, no handcrafted marginals) while
-borrowing the physics-informed Monte Carlo generator's domain knowledge: the
-fitted linear-Gaussian relationship on each causal edge.
+borrowing the structural Monte Carlo generator's domain knowledge: the
+fitted linear-Gaussian relationship on each structural edge.
 
 Each (parent, child) edge in `causal_graph` is fit once on the real data
-(slope, intercept, residual variance — the same conditionals the physics-MC
+(slope, intercept, residual variance — the same conditionals the SMC
 generator samples). Those constants become a differentiable penalty (see
 `_physics_loss`), weighted by `physics_weight`, that pushes each batch onto
 the mechanistic relationships while matching their real residual spread, so
@@ -154,7 +156,7 @@ asserts. Set `physics_weight=0.0` to recover the plain VAE.
 A fourth term, weighted by `marginal_weight`, is the per-feature 1D
 Wasserstein distance (see `_marginal_loss`) between samples drawn from the
 prior and the real batch. It shapes every generated feature's whole
-distribution onto real, including the causal-graph root variables that the
+distribution onto real, including the structural-graph root variables that the
 physics term leaves unconstrained; set `marginal_weight=0.0` to disable it.
 
 `prior_type` chooses how latents are drawn at generation and for the
@@ -181,7 +183,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 | Engine | Correlation Distance (Euclidean) | Mean KS Statistic |
 |---|---|---|
-| Physics-Informed Monte Carlo | 2.8666 | 0.1947 |
+| Structural Monte Carlo | 2.8666 | 0.1947 |
 | Mcmc | **0.9238** | **0.0904** |
 | Regression | 1.0611 | 0.1442 |
 | Variational Autoencoder | 1.7138 | 0.2648 |
@@ -196,7 +198,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat / higher p_value = closer):
 
-- **Physics-Informed Monte Carlo**: 7/8 features statistically distinguishable from real (p < 0.05)
+- **Structural Monte Carlo**: 7/8 features statistically distinguishable from real (p < 0.05)
 - **Mcmc**: 0/8 features statistically distinguishable from real (p < 0.05)
 - **Regression**: 2/8 features statistically distinguishable from real (p < 0.05)
 - **Variational Autoencoder**: 8/8 features statistically distinguishable from real (p < 0.05)
@@ -206,7 +208,7 @@ Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat 
 
 Lower = closer to real; bold = best per feature.
 
-| Feature | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
+| Feature | Structural Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|
 | Brix | 0.1735 | **0.0636** | 0.1375 | 0.2695 | 0.0680 |
 | TA | 0.0910 | 0.1224 | 0.0785 | 0.1687 | **0.0705** |
@@ -221,7 +223,7 @@ Lower = closer to real; bold = best per feature.
 
 **Correlation Distance (Euclidean)** is scale-invariant — Pearson correlation ignores absolute spread, so a method can score well on it while its population is uniformly shrunk or stretched relative to real. This shows each engine's per-feature standard deviation as a fraction of real's (1.00 = matches real exactly; well below 1.00 = generated population is narrower than real).
 
-| Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
+| Feature | Real Std | Structural Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
 | Brix | 1.705 | 1.831 (1.07x) | 1.805 (1.06x) | 1.881 (1.10x) | 1.680 (0.99x) | 1.838 (1.08x) |
 | TA | 4.053 | 3.809 (0.94x) | 3.829 (0.94x) | 4.005 (0.99x) | 3.648 (0.90x) | 3.801 (0.94x) |
@@ -238,7 +240,7 @@ Correlation distance for each engine's synthetic data against the train split it
 
 | Engine | Correlation Dist. (vs. Train) | Correlation Dist. (vs. Test) | Gap |
 |---|---|---|---|
-| Physics-Informed Monte Carlo | 2.7563 | 2.8666 | 0.1103 |
+| Structural Monte Carlo | 2.7563 | 2.8666 | 0.1103 |
 | Mcmc | 0.5950 | 0.9238 | 0.3288 |
 | Regression | 0.7787 | 1.0611 | 0.2824 |
 | Variational Autoencoder | 1.1220 | 1.7138 | 0.5918 |
@@ -251,7 +253,7 @@ Train-on-Synthetic, Test-on-Real for the `Store_cat` label: a RandomForest is tr
 | Trained on | Accuracy | ROC-AUC |
 |---|---|---|
 | **Real (TRTR ceiling)** | 0.8182 | n/a |
-| Physics-Informed Monte Carlo | 0.7662 | n/a |
+| Structural Monte Carlo | 0.7662 | n/a |
 | Mcmc | 0.7662 | n/a |
 | Regression | 0.7922 | n/a |
 | Variational Autoencoder | 0.8442 | n/a |
@@ -265,7 +267,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 
 | Engine | Coverage @ 90% (nominal 0.90) | Calibration Error |
 |---|---|---|
-| Physics-Informed Monte Carlo | 0.943 | 0.0909 |
+| Structural Monte Carlo | 0.943 | 0.0909 |
 | Mcmc | 0.929 | 0.0521 |
 | Regression | 0.946 | 0.0637 |
 | Variational Autoencoder | 0.870 | 0.0836 |
@@ -282,7 +284,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 **Correlation matrices**
 
 ![Real correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_real.png)
-![Physics-Informed Monte Carlo correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_physics_mc.png)
+![Structural Monte Carlo correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_physics_mc.png)
 ![Mcmc correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_mcmc.png)
 ![Regression correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_regression.png)
 ![Variational Autoencoder correlation matrix](../../results/apple_samnegard/figures/correlation/correlation_vae.png)

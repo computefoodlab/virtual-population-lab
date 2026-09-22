@@ -86,7 +86,7 @@ def _fit_edges(x, features, causal_graph):
     For each (parent, child) edge, fit child ~ parent on the real matrix `x`
     (the same space the VAE trains in) and return the mechanistic constants
     (slope, intercept, residual variance) plus the column indices. These are the
-    same linear-Gaussian conditionals the physics-informed Monte Carlo generator
+    same linear-Gaussian conditionals the structural Monte Carlo generator
     samples from; here they become a differentiable constraint on the VAE
     instead of a sampler.
     """
@@ -96,7 +96,7 @@ def _fit_edges(x, features, causal_graph):
     for parent, child in causal_graph:
         if parent not in index or child not in index:
             raise ValueError(
-                f"Causal edge ({parent!r} -> {child!r}) references a feature not in "
+                f"Structural edge ({parent!r} -> {child!r}) references a feature not in "
                 f"FEATURES {features} — check the config's CAUSAL_GRAPH."
             )
 
@@ -182,7 +182,7 @@ def _marginal_loss(generated, real):
     distribution (shape, spread, tails) onto real, not just its first two
     moments.
 
-    The physics term constrains only parent->child edges, leaving the causal
+    The physics term constrains only parent->child edges, leaving the structural
     graph's root variables free to be compressed by the VAE. Applying this term
     to samples drawn from the prior shapes the marginals of the generated
     population, root variables included.
@@ -272,7 +272,7 @@ def _project_constraints(X, A, b, nonneg=True, iters=25):
 
 def _physics_loss(batch, edges):
     """
-    Penalizes how far a batch departs from the fitted causal relationships,
+    Penalizes how far a batch departs from the fitted conditional relationships,
     matching all three moments of each edge's real linear-Gaussian conditional
     so the constraint anchors the mechanism *without* collapsing spread:
 
@@ -285,7 +285,7 @@ def _physics_loss(batch, edges):
                                 loose, so the physics term defends spread rather
                                 than suppressing it.
 
-    Returns 0 when there are no edges (an empty causal graph, i.e. a dataset with
+    Returns 0 when there are no edges (an empty structural graph, i.e. a dataset with
     no reliable mechanistic structure), in which case the physics-informed VAE
     reduces to a calibrated VAE with the covariance term.
     """
@@ -341,14 +341,14 @@ def generate(
 ):
     """
     The physics-informed VAE (PI-VAE): the same generative model as the plain
-    VAE, plus a physics-consistency loss that injects the caller-supplied causal
+    VAE, plus a physics-consistency loss that injects the caller-supplied structural
     graph into training. It keeps the VAE's data-driven strengths (a learned
     latent joint, novel-individual sampling, no handcrafted marginals) while
-    borrowing the physics-informed Monte Carlo generator's domain knowledge: the
-    fitted linear-Gaussian relationship on each causal edge.
+    borrowing the structural Monte Carlo generator's domain knowledge: the
+    fitted linear-Gaussian relationship on each structural edge.
 
     Each (parent, child) edge in `causal_graph` is fit once on the real data
-    (slope, intercept, residual variance — the same conditionals the physics-MC
+    (slope, intercept, residual variance — the same conditionals the SMC
     generator samples). Those constants become a differentiable penalty (see
     `_physics_loss`), weighted by `physics_weight`, that pushes each batch onto
     the mechanistic relationships while matching their real residual spread, so
@@ -369,7 +369,7 @@ def generate(
     A fourth term, weighted by `marginal_weight`, is the per-feature 1D
     Wasserstein distance (see `_marginal_loss`) between samples drawn from the
     prior and the real batch. It shapes every generated feature's whole
-    distribution onto real, including the causal-graph root variables that the
+    distribution onto real, including the structural-graph root variables that the
     physics term leaves unconstrained; set `marginal_weight=0.0` to disable it.
 
     `prior_type` chooses how latents are drawn at generation and for the
@@ -407,7 +407,7 @@ def generate(
         log.info("  using %d PRE-SPECIFIED (literature/mechanistic) edge(s)", len(edges))
     else:
         edges = _fit_edges(x, features, causal_graph)
-        log.info("  fit %d causal edge(s) as physics constraints: %s",
+        log.info("  fit %d structural edge(s) as physics constraints: %s",
                  len(edges), ", ".join(f"{p}->{c}" for p, c in causal_graph))
 
     # Conservation / mass-balance constraints (real physical laws, in source units).

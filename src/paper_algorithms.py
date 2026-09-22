@@ -20,8 +20,12 @@ os.makedirs(OUT, exist_ok=True)
 BASELINES_TEX = r"""% Per-baseline model equations (main manuscript). Notation: a real feature
 % vector x in R^D; training matrix X (n x D); synthetic matrix \tilde{X} (N x D).
 % Requires amsmath, amssymb.
-\paragraph{Physics-informed Monte Carlo.} Ancestral sampling over a caller-supplied
-causal graph with edge set $E$ and roots $R$. Each root is drawn from its real
+\paragraph{Structural Monte Carlo.} Ancestral sampling over a caller-supplied
+structural graph with edge set $E$ and roots $R$. The edges are estimated from
+observational data by ordinary least squares, so they encode conditional
+relationships rather than identified causal effects; ancestral sampling requires
+only a valid factorization of the joint, which any topological ordering of the
+graph supplies. Each root is drawn from its real
 Gaussian marginal; each edge $(p\!\to\!c)\in E$ draws the child from an
 ordinary-least-squares fit plus Gaussian residual noise, in topological order:
 \begin{align}
@@ -60,7 +64,7 @@ q_\phi(z\mid x) &= \mathcal{N}\!\big(\mu_\phi(x),\,\mathrm{diag}\,\sigma^2_\phi(
 Generation draws $z\sim\mathcal{N}(0,I)$ and returns $\tilde{x}=g_\theta(z)$.
 
 \paragraph{Physics-VAE (proposed).} The VAE above augmented with a physics-consistency
-term on the fitted causal edges and a marginal-matching term, followed by an
+term on the fitted structural edges and a marginal-matching term, followed by an
 empirical-copula calibration step:
 \begin{equation}
 \mathcal{L}=\mathcal{L}_{\mathrm{rec}}+\beta(t)\,\mathcal{L}_{\mathrm{KL}}
@@ -76,7 +80,7 @@ BASELINES_MD = r"""## Baseline model equations (main text)
 
 Notation: real feature vector x ∈ R^D; training matrix X (n×D); synthetic X̃ (N×D).
 
-**Physics-informed Monte Carlo** — ancestral sampling over the causal graph (roots R, edges E):
+**Structural Monte Carlo** — ancestral sampling over the structural graph (roots R, edges E):
 ```
 roots:  x̃_r ~ N(μ_r, σ_r²)                                        r ∈ R
 edges:  x̃_c = β_pc·x̃_p + α_pc + ε_c,  ε_c ~ N(0, σ²_pc)          (p→c) ∈ E
@@ -112,7 +116,7 @@ ALG_TEX = r"""% Full Physics-VAE training + generation (Supplementary).
 \caption{Physics-VAE: training and virtual-population generation}
 \label{alg:physvae}
 \begin{algorithmic}[1]
-\Require training matrix $X\in\mathbb{R}^{n\times D}$; causal edges $E$; weights
+\Require training matrix $X\in\mathbb{R}^{n\times D}$; structural edges $E$; weights
 $\lambda_{\mathrm{cov}},\lambda_{\mathrm{phys}},\lambda_{\mathrm{marg}},\beta$;
 free-bits $c$; epochs $T$; latent dim $d_z$; population size $N$
 \State Fit scaler on $X$ (\textbf{training data only}); standardize $X$
@@ -154,7 +158,7 @@ free-bits $c$; epochs $T$; latent dim $d_z$; population size $N$
 
 ALG_MD = r"""## Physics-VAE algorithm — training + generation (Supplementary)
 
-Inputs: training matrix X (n×D); causal edges E; weights λ_cov, λ_phys, λ_marg, β; free-bits c; epochs T; latent dim d_z; population size N.
+Inputs: training matrix X (n×D); structural edges E; weights λ_cov, λ_phys, λ_marg, β; free-bits c; epochs T; latent dim d_z; population size N.
 
 ```
 1.  Fit scaler on X (TRAINING DATA ONLY); standardize X.

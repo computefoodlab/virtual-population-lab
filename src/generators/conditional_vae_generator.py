@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 # Reuse the physics-informed VAE's machinery so the conditional VAE can carry
-# the same causal-graph physics loss.
+# the same structural-graph physics loss.
 from src.generators.hybrid_vae_generator import _fit_edges, _physics_loss
 
 
@@ -51,7 +51,7 @@ def train(x, cond, latent_dim, epochs, beta=1.0, hidden_dim=128, free_bits=0.0,
     a free-bits floor) plus a covariance-matching term, matching the
     conventions of the other VAE engines. Returns the trained model.
 
-    If `physics_weight > 0`, a causal-graph physics-consistency term is added
+    If `physics_weight > 0`, a structural-graph physics-consistency term is added
     (identical to the physics-informed VAE's): each edge's linear-Gaussian conditional
     is fit once on the training rows `x` (the seen conditions), then penalized on
     the reconstructions. The assumption — and what the transfer experiment tests
@@ -67,7 +67,7 @@ def train(x, cond, latent_dim, epochs, beta=1.0, hidden_dim=128, free_bits=0.0,
     edges = []
     tgt_c = None
     if physics_weight > 0 and causal_graph:
-        # Fit the causal-edge conditionals on the seen (training) rows.
+        # Fit the structural-edge conditionals on the seen (training) rows.
         edges = _fit_edges(np.asarray(x, dtype=np.float32), features, causal_graph)
         # If a target (unseen) condition is given, also constrain the physics of
         # samples generated for that condition each epoch: constraining
