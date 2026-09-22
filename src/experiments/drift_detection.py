@@ -1,5 +1,5 @@
 """
-Temporal-drift detection and revalidation trigger (Reviewer 1 #5).
+Temporal-drift detection and revalidation trigger.
 
 A deployed VFP is a snapshot of the population at training time; fruit populations
 shift with season, cultivar, practice and climate, so a VFP must be a versioned,

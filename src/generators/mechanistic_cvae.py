@@ -1,10 +1,8 @@
 """
 Mechanistically-constrained conditional VAE (PI-VFP for the citrus digital twin).
 
-Unlike the data-fitted linear-Gaussian edges of the earlier PI-VAE (a reviewer
-concern: those are correlations learned from the same data, not physics), this
-generator's constraint term is built from EXPLICIT MECHANISTIC EQUATIONS applied
-during training:
+This generator's constraint term is built from explicit mechanistic equations
+applied during training (rather than relationships fitted from the same data):
 
   1. Conservation / mass balance (hard a-priori equations):
        - inequality pairs  x[heavy] >= x[light]   (e.g. rind fresh >= rind dry,

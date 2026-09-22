@@ -1,12 +1,12 @@
 """
-Modern deep tabular generators (CTGAN, TVAE) vs PI-VAE and the MCMC prior-art.
+Modern deep tabular generators (CTGAN, TVAE) compared with the physics-informed VAE
+and the Gaussian-copula MCMC prior art.
 
-Answers Reviewer 1 #10: are stronger modern generative baselines missing? We add
-CTGAN and TVAE (Xu et al., 2019) and compare them on the same fidelity metrics
-(correlation distance, mean KS, energy distance, MMD) against real held-out data.
-The expected, honest finding is that GAN/VAE-style deep generators need more data
-than these datasets provide and overfit or underperform at small n, while
-remaining competitive on the largest set (apple). Multi-seed mean +/- std.
+All engines are scored through the same pipeline on the same fidelity metrics
+(correlation distance, mean KS, energy distance, MMD) against real held-out data, so
+the rows are directly comparable. Deep tabular generators are data-hungry, so on
+these small individual-fruit tables their fit is expected to be weaker. Multi-seed
+mean +/- s.d.
 
 Run:  python -m src.experiments.deep_baselines
 Writes: results/_summary/deep_baselines.csv
