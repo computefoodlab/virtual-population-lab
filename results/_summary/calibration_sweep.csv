@@ -1,0 +1,13 @@
+dataset,cell,corr_dist,mean_ks
+citrus_exp6,VAE,0.3954,0.1515
+citrus_exp6,VAE+calibration,0.3998,0.087
+tomato_nir,VAE,0.5126,0.0812
+tomato_nir,VAE+calibration,0.5151,0.0749
+grape_berry,VAE,0.3236,0.0665
+grape_berry,VAE+calibration,0.3215,0.0499
+apple_samnegard,VAE,0.9325,0.1325
+apple_samnegard,VAE+calibration,0.9234,0.1246
+mango_composition,VAE,0.3466,0.1334
+mango_composition,VAE+calibration,0.3478,0.1362
+biofood_safou_region,VAE,0.1182,0.2799
+biofood_safou_region,VAE+calibration,0.1121,0.276

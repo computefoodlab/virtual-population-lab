@@ -58,7 +58,7 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
     if quiet:
         gen_log.setLevel(logging.WARNING)
     # FIXED_EDGES lets a config impose a mechanistic/literature slope on specific
-    # causal-graph edges (given in source units) instead of fitting it from data,
+    # structural-graph edges (given in source units) instead of fitting it from data,
     # e.g. grape Glucose->Fructose = 1.0 (invertase 1:1 stoichiometry). All other
     # edges stay data-fitted. Only affects the PI-VAE physics term.
     fixed_edges = getattr(config, "FIXED_EDGES", None)
@@ -96,7 +96,7 @@ def generate_population(source_df, config, scaler, n_samples=None, quiet=False):
         and getattr(config, "VAE_REPORT_UNCALIBRATED", False)
         and not quiet
     )
-    # Seed every engine from the same RNG state, for both numpy (physics-MC,
+    # Seed every engine from the same RNG state, for both numpy (SMC,
     # regression) and torch (VAE, PI-VAE), so each engine's output is independent
     # of the order the engines happen to run in.
     def _seed():
@@ -510,7 +510,7 @@ def main():
     else:
         vae_scaler = StandardScaler().fit(train_df[config.FEATURES])
 
-    log.info("Generating synthetic populations (physics-MC, regression, VAE, PI-VAE)...")
+    log.info("Generating synthetic populations (SMC, regression, VAE, PI-VAE)...")
     generated = generate_population(train_df, config, vae_scaler)
     for key, gen_df in generated.items():
         log.info("  %-30s generated %d rows", display_name(key), len(gen_df))

@@ -22,22 +22,23 @@ abbreviations as follows:
 
 | Repo key | Paper | Module |
 |---|---|---|
-| `physics_mc` | PI-MC | [src/generators/physics_mc_generator.py](src/generators/physics_mc_generator.py) |
+| `physics_mc` | SMC (Structural Monte Carlo) | [src/generators/physics_mc_generator.py](src/generators/physics_mc_generator.py) |
 | `mcmc` | MCMC (prior art) | [src/generators/mcmc_generator.py](src/generators/mcmc_generator.py) |
 | `regression` | RFR | [src/generators/regression_generator.py](src/generators/regression_generator.py) |
 | `vae` | VAE | [src/generators/vae_generator.py](src/generators/vae_generator.py) |
 | `hybrid_vae` | PI-VAE | [src/generators/hybrid_vae_generator.py](src/generators/hybrid_vae_generator.py) |
 
-1. **Structural / physics-informed Monte Carlo (PI-MC)** — ancestral sampling
+1. **Structural Monte Carlo (SMC)** — ancestral sampling
    over a supplied structural graph. Root variables are drawn from their real
    marginals; each (parent → child) edge is fit as a linear-Gaussian conditional
-   on the training data. Forward sampling is exact, with no Markov chains. Where
+   on the training data (a data-fitted structural prior, not physics). Forward
+   sampling is exact, with no Markov chains. Where
    a config supplies `CONSTRAINTS` (a genuine conservation / mass-balance law,
    not a fitted relation), the generated population is projected onto the
-   feasible region a priori so that law holds exactly (0% violations) — the same
-   hard projection the PI-VAE uses; this is what makes the engine
-   physics-informed rather than only structure-informed. With no constraints it
-   is plain structural Monte Carlo.
+   feasible region a priori so that law holds exactly (0% violations), the same
+   hard conservation projection the PI-VAE uses. This is a structural baseline
+   (its edges are data-fitted structural priors); "physics-informed" is reserved
+   for the PI-VAE.
 
 2. **Gaussian-copula Monte Carlo (MCMC)** — the domain prior art for virtual
    food populations: correlated, non-Gaussian parameters are drawn by
@@ -55,15 +56,18 @@ abbreviations as follows:
    the standard normal, `beta` annealed over the first `kl_warmup_frac` of
    training) and a covariance-matching term (`cov_weight`).
 
-5. **Physics-informed VAE (PI-VAE)** — the VAE above plus a structural/physics
-   consistency term on the graph edges, a marginal-matching term, and an
-   empirical-copula calibration post-step; where a governing physical law holds,
-   a conservation/compositional constraint is imposed a priori (soft penalty plus
-   a hard feasibility projection at generation). A conditional variant
+5. **Physics-informed VAE (PI-VAE)** — the VAE above plus, where a governing
+   physical law holds, a conservation/compositional constraint imposed a priori
+   (soft penalty plus a hard feasibility projection at generation), a
+   marginal-matching term, and an empirical-copula calibration post-step. The
+   imposed physics is the conservation law only; feature dependence for which no
+   law exists is learned by the VAE from data (covariance matching), **not**
+   imposed as a fitted parent–child edge — the data-fitted edge-consistency term
+   is disabled (`VAE_PHYSICS_WEIGHT = 0`), since removing it left fidelity
+   unchanged or slightly better on all six datasets. A conditional variant
    ([src/generators/mechanistic_cvae.py](src/generators/mechanistic_cvae.py))
-   conditions generation on a covariate (e.g. storage temperature and duration)
-   for the digital-twin decision. `physics_weight = 0` recovers a calibrated VAE;
-   an empty graph makes the physics term zero.
+   conditions generation on storage temperature and duration and on the
+   commodity's published kinetic equations for the digital-twin decision.
 
 Each generator module exposes a single `generate(...)` function with a
 consistent calling convention.

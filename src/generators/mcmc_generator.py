@@ -28,7 +28,7 @@ the chain (e.g. mass balance for a proximate composition), making the sampler a
 constrained MCMC. With no correlation structure it reduces to independent
 marginal resampling, the same floor as an empty-graph `physics_mc`.
 
-Unlike `physics_mc` (which drops all correlation when no causal graph is given),
+Unlike `physics_mc` (which drops all correlation when no structural graph is given),
 this baseline preserves whatever joint correlation the data actually has.
 """
 import logging

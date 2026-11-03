@@ -1,12 +1,12 @@
 """
-Modern deep tabular generators (CTGAN, TVAE) vs PI-VAE and the MCMC prior-art.
+Modern deep tabular generators (CTGAN, TVAE) compared with the physics-informed VAE
+and the Gaussian-copula MCMC prior art.
 
-Answers Reviewer 1 #10: are stronger modern generative baselines missing? We add
-CTGAN and TVAE (Xu et al., 2019) and compare them on the same fidelity metrics
-(correlation distance, mean KS, energy distance, MMD) against real held-out data.
-The expected, honest finding is that GAN/VAE-style deep generators need more data
-than these datasets provide and overfit or underperform at small n, while
-remaining competitive on the largest set (apple). Multi-seed mean +/- std.
+All engines are scored through the same pipeline on the same fidelity metrics
+(correlation distance, mean KS, energy distance, MMD) against real held-out data, so
+the rows are directly comparable. Deep tabular generators are data-hungry, so on
+these small individual-fruit tables their fit is expected to be weaker. Multi-seed
+mean +/- s.d.
 
 Run:  python -m src.experiments.deep_baselines
 Writes: results/_summary/deep_baselines.csv
@@ -22,7 +22,7 @@ from sklearn.preprocessing import StandardScaler
 
 from src.config_loader import load_config
 from src.data_loading import load_data
-from src.generators import hybrid_vae_generator as hv, mcmc_generator
+from src.main import generate_population
 from src.evaluation.evaluate import correlation_euclidean_dist, marginal_ks_table
 from src.multiseed import energy_distance, mmd_rbf
 
@@ -30,7 +30,7 @@ from ctgan import CTGAN, TVAE
 
 DATASETS = ["citrus_exp6", "tomato_nir", "grape_berry", "apple_samnegard",
             "mango_composition", "biofood_safou_region"]
-SEEDS = [41, 42, 43]
+SEEDS = [41, 42, 43, 44, 45]
 EPOCHS = 300
 N = 1000
 OUT = "results/_summary"
@@ -52,38 +52,32 @@ def run(name):
     df = load_data(cfg)
     rows = []
     for seed in SEEDS:
+        cfg.RANDOM_SEED = seed
         np.random.seed(seed); torch.manual_seed(seed)
         tr, te = train_test_split(df, test_size=cfg.TEST_SIZE, random_state=seed)
         te_f = te[F].reset_index(drop=True)
 
         # CTGAN
+        np.random.seed(seed); torch.manual_seed(seed)
         m = CTGAN(epochs=EPOCHS, verbose=False)
         m.fit(tr[F], discrete_columns=[])
         rows.append({"engine": "CTGAN", **metrics(te_f, m.sample(N)[F], F, seed)})
 
         # TVAE
+        np.random.seed(seed); torch.manual_seed(seed)
         m = TVAE(epochs=EPOCHS)
         m.fit(tr[F], discrete_columns=[])
         rows.append({"engine": "TVAE", **metrics(te_f, m.sample(N)[F], F, seed)})
 
-        # MCMC prior-art
-        np.random.seed(seed)
-        rows.append({"engine": "MCMC", **metrics(
-            te_f, mcmc_generator.generate(tr, F, n_samples=N), F, seed)})
-
-        # PI-VAE (respect IS_PRE_SCALED like the main pipeline)
-        sc = None if cfg.IS_PRE_SCALED else StandardScaler().fit(tr[F])
-        x = tr[F].values if sc is None else sc.transform(tr[F])
-        np.random.seed(seed); torch.manual_seed(seed)
-        g = hv.generate(x, F, cfg.CAUSAL_GRAPH, latent_dim=cfg.LATENT_DIM,
-                        epochs=cfg.VAE_EPOCHS, beta=cfg.VAE_BETA, n_samples=N, scaler=sc,
-                        use_minibatch=cfg.VAE_USE_MINIBATCH, batch_size=cfg.VAE_BATCH_SIZE,
-                        cov_weight=cfg.VAE_COV_WEIGHT, physics_weight=cfg.VAE_PHYSICS_WEIGHT,
-                        marginal_weight=cfg.VAE_MARGINAL_WEIGHT, prior_type=cfg.VAE_PRIOR_TYPE,
-                        constrain_generated=cfg.VAE_CONSTRAIN_GENERATED, patience=cfg.VAE_PATIENCE,
-                        hidden_dim=cfg.VAE_HIDDEN_DIM, dropout=cfg.VAE_DROPOUT,
-                        free_bits=cfg.VAE_FREE_BITS, calibrate_marginals=cfg.VAE_CALIBRATE_MARGINALS)
-        rows.append({"engine": "PI-VAE", **metrics(te_f, g, F, seed)})
+        # MCMC prior-art and PI-VAE via the SAME canonical path as the main
+        # pipeline (src.main.generate_population), so their fidelity numbers are
+        # identical to Table S6 / the multiseed table (same calibration
+        # reference, constraints and per-engine seeding) and cannot drift.
+        scaler = None if cfg.IS_PRE_SCALED else StandardScaler().fit(tr[F])
+        torch.manual_seed(seed)
+        gen = generate_population(tr, cfg, scaler, n_samples=N, quiet=True)
+        rows.append({"engine": "MCMC", **metrics(te_f, gen["mcmc"][F], F, seed)})
+        rows.append({"engine": "PI-VAE", **metrics(te_f, gen["hybrid_vae"][F], F, seed)})
 
     d = pd.DataFrame(rows)
     print(f"\n=== {name}  (n_train={int(len(df)*(1-cfg.TEST_SIZE))}) ===")

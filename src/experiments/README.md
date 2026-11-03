@@ -8,7 +8,7 @@ few minutes.
 | Script | Produces | Supplement |
 |---|---|---|
 | `python -m src.experiments.deep_baselines` | `results/_summary/deep_baselines.csv` — correlation distance for CTGAN, TVAE, MCMC and PI-VAE. | Table S7 |
-| `python -m src.experiments.ablation` | `results/_summary/component_ablation.csv` — VAE / +calibration / PI-VAE±calibration on the datasets with genuine multivariate structure. | Table S8 |
+| `python -m src.experiments.ablation` | `results/_summary/component_ablation.csv` — isolates the imposed conservation physics vs the marginal calibration (VAE / +conservation / +calibration / both) on the conservation-law datasets, with the conservation-law violation rate; plus `results/_summary/calibration_sweep.csv` — VAE vs VAE+calibration across all six datasets. The data-fitted edge term is off throughout (`VAE_PHYSICS_WEIGHT = 0`). | Table S8 |
 | `python -m src.experiments.citrus_digital_twin` | `results/_summary/citrus_digital_twin.csv` — citrus chilling-injury at-risk-fraction decision (leave-one-condition-out): single value vs bootstrap vs conditional VFP, per CI tolerance. Needs the citrus raw file (on request). | Table S9 |
 | `python -m src.experiments.transfer_decision` | `results/_summary/transfer_decision.csv` — data-scarce cultivar-transfer decision (representative, bootstraps, empirical-Bayes, shrinkage-MVN, VFP). | Table S10 |
 | `python -m src.experiments.citrus_fewshot_conformal` | `results/_summary/citrus_fewshot_conformal.csv` — off-support coverage@90 recovered by few-shot conformal recalibration (citrus leave-one-condition-out). Needs the citrus raw file (on request). | Table S14 |

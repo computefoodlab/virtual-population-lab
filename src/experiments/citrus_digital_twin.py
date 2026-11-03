@@ -19,12 +19,14 @@ each threshold.
                    cannot express a fraction
   pooled bootstrap resample CI from the seen conditions
   VFP (PI-VFP)     conditional VAE conditioned on temperature, duration and the
-                   published chilling-injury damage integral Omega(T, t), with the
-                   rind non-negativity / mass-balance conservation constraints;
-                   generates the outcome distribution for the held-out (T, t)
+                   citrus flagship's published mechanistic equations (chilling-injury
+                   damage integral, Arrhenius colour kinetics, transpiration mass
+                   loss; Onwude et al. 2022, 2024), with the rind non-negativity /
+                   mass-balance conservation constraints; generates the outcome
+                   distribution for the held-out (T, t)
 
-The VFP conditions on the storage state and the published chilling-injury
-equation (as a conditioning input, so the mechanism informs generation while the
+The VFP conditions on the storage state and the commodity's published kinetic
+equations (as conditioning inputs, so the mechanisms inform generation while the
 fruit-to-fruit spread is learned from data) and imposes the rind conservation
 constraints.
 
@@ -57,31 +59,32 @@ OUT = "results/_summary"
 
 R_GAS = 8.314  # J/mol/K
 
-# Published chilling-injury kinetics (Onwude et al. 2024): the damage integral at a
-# constant storage temperature reduces to  Omega(T, t) = kref * exp(-Ea/R (1/Tk -
-# 1/Tref)) * t. Omega is supplied to the generator as an extra CONDITIONING input
-# (physics-informed conditioning): generation is informed by the published
-# equation while the fruit-to-fruit spread is still learned from data. By default
-# the two rate parameters are fitted to the published form on each training fold;
-# set USE_PUBLISHED_PARAMS = True and fill PUBLISHED to impose the paper's values.
-USE_PUBLISHED_PARAMS = False
-PUBLISHED = {"kref": None, "Ea": None, "Tref_C": None}
+# The digital twin conditions on the citrus flagship's published mechanistic
+# equations (Onwude et al. 2022, 2024), each an Arrhenius rate integrated over
+# storage time -> a rate x time prediction at constant temperature:
+#   - ChillingInjury: damage integral  Omega(T,t) = kref*exp(-Ea/R (1/Tk-1/Tref))*t
+#   - Colour:         Arrhenius quality kinetics  -dA/dt = k(T)*A^n
+#   - MoistureLoss:   transpiration-driven mass loss (T/time form)
+# Each equation's prediction is supplied to the generator as a physics-informed
+# CONDITIONING input (standardized): generation is informed by the published
+# equations while the fruit-to-fruit spread is learned from data. The two rate
+# parameters of each equation are fitted to its published form on each training
+# fold (the papers calibrate rather than tabulate them); see the Onwude papers.
+KINETIC_OUTCOMES = ["ChillingInjury", "Colour", "MoistureLoss"]
 
 
 def omega(T, t, kref, Ea, Tref_K):
-    """Published chilling-injury damage integral at constant temperature."""
+    """Arrhenius rate x time at constant temperature (the published equation form)."""
     Tk = np.asarray(T) + 273.15
     return kref * np.exp(-Ea / R_GAS * (1.0 / Tk - 1.0 / Tref_K)) * np.asarray(t)
 
 
-def fit_kinetics(df):
-    """Estimate (kref, Ea) of the published damage-integral form on a training fold,
-    or use the paper's values if USE_PUBLISHED_PARAMS. Returns (kref, Ea, Tref_K)."""
-    T, t, y = df[COND[0]].values, df[COND[1]].values, df["ChillingInjury"].values
+def fit_kinetics(df, outcome):
+    """Fit (kref, Ea) of the published Arrhenius-rate x time form to `outcome` on a
+    training fold. Returns (kref, Ea, Tref_K)."""
+    T, t, y = df[COND[0]].values, df[COND[1]].values, df[outcome].values
     Tref_K = float((T + 273.15).mean())
-    if USE_PUBLISHED_PARAMS and all(PUBLISHED[k] is not None for k in ("kref", "Ea", "Tref_C")):
-        return PUBLISHED["kref"], PUBLISHED["Ea"], PUBLISHED["Tref_C"] + 273.15
-    p0 = [max(y.mean() / max(t.mean(), 1.0), 1e-3), -2.0e4]
+    p0 = [max(abs(y).mean() / max(t.mean(), 1.0), 1e-3), -2.0e4]
     try:
         popt, _ = curve_fit(lambda X, kref, Ea: omega(X[0], X[1], kref, Ea, Tref_K),
                             (T, t), y, p0=p0, maxfev=20000)
@@ -119,15 +122,20 @@ def run():
         for T, Dur in conds:
             te = d[(d[COND[0]] == T) & (d[COND[1]] == Dur)]
             tr = d[~((d[COND[0]] == T) & (d[COND[1]] == Dur))]
-            # Fit the published damage-integral form on this fold; the standardized
-            # Omega(T, t) becomes the fourth conditioning input.
-            kref, Ea, Tref_K = fit_kinetics(tr)
-            om_tr = omega(tr[COND[0]].values, tr[COND[1]].values, kref, Ea, Tref_K)
-            om_mu, om_sd = float(om_tr.mean()), float(om_tr.std()) + 1e-9
+            # Fit each published equation on this fold; each standardized prediction
+            # becomes a physics-informed conditioning input.
+            eqs = {}
+            for c in KINETIC_OUTCOMES:
+                kref, Ea, Tref_K = fit_kinetics(tr, c)
+                pred = omega(tr[COND[0]].values, tr[COND[1]].values, kref, Ea, Tref_K)
+                eqs[c] = (kref, Ea, Tref_K, float(pred.mean()), float(pred.std()) + 1e-9)
 
             def cvec(t_, dd_):
-                return np.array([(t_ - tm) / ts, (dd_ - dm) / ds, (t_ * dd_ - xm) / xs,
-                                 (omega(t_, dd_, kref, Ea, Tref_K) - om_mu) / om_sd])
+                base = [(t_ - tm) / ts, (dd_ - dm) / ds, (t_ * dd_ - xm) / xs]
+                for c in KINETIC_OUTCOMES:
+                    kref, Ea, Tref_K, mu, sd = eqs[c]
+                    base.append((omega(t_, dd_, kref, Ea, Tref_K) - mu) / sd)
+                return np.array(base)
 
             sc = StandardScaler().fit(tr[FEATURES])
             cond = np.array([cvec(t, dd) for t, dd in zip(tr[COND[0]], tr[COND[1]])])
@@ -143,29 +151,72 @@ def run():
             avg_ci = tr["ChillingInjury"].mean()
             for thr in THRESHOLDS:
                 true = at_risk(te["ChillingInjury"].values, thr)
-                rows.append((thr, abs((1.0 if avg_ci > thr else 0.0) - true),
-                             abs(at_risk(boot, thr) - true), abs(at_risk(g, thr) - true)))
-        return pd.DataFrame(rows, columns=["thr", "avg", "boot", "vfp"])
+                single_frac = 1.0 if avg_ci > thr else 0.0
+                boot_frac = at_risk(boot, thr)
+                vfp_frac = at_risk(g, thr)
+                rows.append((thr, float(T), float(Dur), true, single_frac, boot_frac, vfp_frac,
+                             abs(single_frac - true), abs(boot_frac - true), abs(vfp_frac - true)))
+        return pd.DataFrame(rows, columns=["thr", "T", "Dur", "true",
+                                           "single_frac", "boot_frac", "vfp_frac",
+                                           "avg", "boot", "vfp"])
 
     per_seed = [run_seed(s) for s in SEEDS]
     allr = pd.concat(per_seed)
     print(f"\n=== Citrus digital-twin decision (leave-one-condition-out, "
           f"{len(SEEDS)} seeds, {len(conds)} conditions) ===")
-    print(f"model: conditional VAE conditioned on (storage temperature, duration, "
-          f"published chilling-injury damage integral) with rind conservation constraints")
-    print(f"at-risk-fraction MAE per CI tolerance (lower is better):\n")
-    print(f"{'CI thr %':>9}{'avg':>10}{'bootstrap':>12}{'VFP':>10}")
+    print(f"model: conditional VAE conditioned on (storage temperature, duration, and the "
+          f"published chilling-injury, colour, and moisture kinetic equations) with rind "
+          f"conservation constraints")
+
+    # (1) at-risk-fraction absolute error per tolerance, reported as mean +/- s.d.
+    # over the seed x condition folds (n = seeds x conditions), so the table shows
+    # variability, not just a point error.
+    print(f"\nat-risk-fraction absolute error per CI tolerance (mean +/- s.d., lower is better):\n")
+    print(f"{'CI thr %':>9}{'single':>18}{'bootstrap':>18}{'VFP':>18}")
     records = []
     for thr in THRESHOLDS:
         sub = allr[allr.thr == thr]
-        mae = {c: sub[c].mean() for c in ("avg", "boot", "vfp")}
-        print(f"{thr:>9}{mae['avg']:>10.3f}{mae['boot']:>12.3f}{mae['vfp']:>10.3f}")
-        records.append({"ci_threshold": thr, "avg_mae": round(mae["avg"], 4),
-                        "bootstrap_mae": round(mae["boot"], 4), "vfp_mae": round(mae["vfp"], 4),
+        st = {c: (sub[c].mean(), sub[c].std()) for c in ("avg", "boot", "vfp")}
+        print(f"{thr:>9}"
+              f"{st['avg'][0]:>10.3f} +/-{st['avg'][1]:<5.3f}"
+              f"{st['boot'][0]:>10.3f} +/-{st['boot'][1]:<5.3f}"
+              f"{st['vfp'][0]:>10.3f} +/-{st['vfp'][1]:<5.3f}")
+        records.append({"ci_threshold": thr,
+                        "single_mae": round(st["avg"][0], 4), "single_sd": round(st["avg"][1], 4),
+                        "bootstrap_mae": round(st["boot"][0], 4), "bootstrap_sd": round(st["boot"][1], 4),
+                        "vfp_mae": round(st["vfp"][0], 4), "vfp_sd": round(st["vfp"][1], 4),
                         "n": len(sub)})
     os.makedirs(OUT, exist_ok=True)
     pd.DataFrame(records).to_csv(f"{OUT}/citrus_digital_twin.csv", index=False)
     print(f"\nwrote: {OUT}/citrus_digital_twin.csv")
+
+    # (2) operational consequence: the ACTUAL predicted at-risk fraction of each
+    # method against the true fraction, per storage condition, at a representative
+    # tolerance -- so the table reads "true 31%, single 0%, bootstrap 24%, VFP 29%",
+    # rather than merely "VFP has the lowest error".
+    pc = (allr
+          .groupby(["thr", "T", "Dur"])
+          .agg(true_pct=("true", "mean"), single_pct=("single_frac", "mean"),
+               bootstrap_pct=("boot_frac", "mean"), vfp_pct=("vfp_frac", "mean"))
+          .reset_index())
+    for c in ("true_pct", "single_pct", "bootstrap_pct", "vfp_pct"):
+        pc[c] = (pc[c] * 100).round(1)
+    pc["single_abs_err_pct"] = (pc["single_pct"] - pc["true_pct"]).abs().round(1)
+    pc["bootstrap_abs_err_pct"] = (pc["bootstrap_pct"] - pc["true_pct"]).abs().round(1)
+    pc["vfp_abs_err_pct"] = (pc["vfp_pct"] - pc["true_pct"]).abs().round(1)
+    # per-condition winner (smallest absolute error) at each threshold
+    err = pc[["single_abs_err_pct", "bootstrap_abs_err_pct", "vfp_abs_err_pct"]].values
+    names = np.array(["single", "bootstrap", "vfp"])
+    pc["closest"] = names[err.argmin(axis=1)]
+    for thr in THRESHOLDS:
+        sub = pc[pc.thr == thr]
+        wins = sub["closest"].value_counts().to_dict()
+        risky = sub[sub.true_pct >= 20]
+        wins_risky = risky["closest"].value_counts().to_dict()
+        print(f"\n[{thr}% tolerance] per-condition winner counts (of {len(sub)}): {wins}")
+        print(f"   on the {len(risky)} conditions with true risk >= 20%: {wins_risky}")
+    pc.to_csv(f"{OUT}/citrus_digital_twin_percondition.csv", index=False)
+    print(f"\nwrote: {OUT}/citrus_digital_twin_percondition.csv (all thresholds)")
 
 
 if __name__ == "__main__":

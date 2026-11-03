@@ -60,7 +60,7 @@ DATASET_LABEL = {
     "biofood_safou_region": "Safou (nutrients)",
 }
 ENGINES = ["physics_mc", "mcmc", "regression", "vae", "hybrid_vae"]
-ENGINE_NAME = {"physics_mc": "Physics-MC", "mcmc": "MCMC (prior-art)",
+ENGINE_NAME = {"physics_mc": "SMC", "mcmc": "MCMC (prior-art)",
                "regression": "Regression", "vae": "VAE", "hybrid_vae": "PI-VAE"}
 # metric key -> (display, "lower is better"?)
 METRICS = {

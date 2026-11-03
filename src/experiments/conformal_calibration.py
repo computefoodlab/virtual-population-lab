@@ -1,17 +1,16 @@
 """
-In-distribution calibration via split-conformal recalibration (Reviewer 1 #4).
+In-distribution calibration via split-conformal recalibration.
 
 The plain PI-VAE per-feature interval can under-cover on held-out real data. This
 experiment measures coverage@90 and calibration error for the PI-VAE population
-BEFORE and AFTER split-conformal recalibration: the real held-out set is split
+before and after split-conformal recalibration: the real held-out set is split
 into a calibration half (sets the conformal widening q) and an evaluation half
 (where coverage is measured), so calibration never sees the evaluation points.
 
-The honest, expected finding: conformal recovers nominal in-distribution
-coverage@90 wherever n is adequate (citrus flagship, date, mango, tomato, apple),
-and fails only at very small n (safou, n=41), where the calibration split is too
-small for a stable finite-sample quantile. This is IN-DISTRIBUTION calibration;
-off-support/transfer calibration remains open (Reviewer 1 #3).
+Conformal restores coverage@90 at the target level where n is adequate, and is
+limited at very small n (safou, n=41), where the calibration split is too small for
+a stable finite-sample quantile. This is in-distribution calibration; off-support
+and transfer calibration are handled separately.
 
 Run:  python -m src.experiments.conformal_calibration
       python -m src.experiments.conformal_calibration citrus_exp6 --seeds 41 42 43 44 45

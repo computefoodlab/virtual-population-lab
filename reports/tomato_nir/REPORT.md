@@ -1,6 +1,6 @@
 # Virtual Population Lab — Report
 
-_Auto-generated on 2026-09-21 17:45 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
+_Auto-generated on 2026-09-21 23:54 from `tomato_nir`. Re-run `make run CONFIG=tomato_nir` to refresh._
 
 ## Objective
 
@@ -15,7 +15,7 @@ Compare modeling engines on how well each generates a synthetic population that 
 
 ## Methodology
 
-**Physics-Informed Monte Carlo** (`src.generators.physics_mc_generator.generate`)
+**Structural Monte Carlo** (`src.generators.physics_mc_generator.generate`)
 
 Generates synthetic rows via forward Monte Carlo sampling over a
 caller-supplied structural graph:
@@ -30,15 +30,17 @@ Every conditional here is a Gaussian we can sample directly, so plain
 ancestral Monte Carlo sampling (this function) is exact — there's no
 intractable distribution to approximate, so no need for MCMC.
 
-Where the caller supplies `constraints` — genuine conservation / mass-balance
-laws  sum_i w_i x_i <= bound  in source units, not fitted from data — the
-generated population is projected onto the feasible region with the same hard
-feasibility projection the PI-VAE uses, so those physical laws hold exactly
-(0% violations). This is what makes the engine physics-informed rather than
-only structure-informed; with no constraints it is plain structural Monte
-Carlo. The structural graph, roots and constraints are all dataset knowledge
-supplied by the caller (see src/configs/), so the function works unchanged
-for a different set of features and relationships.
+This is the Structural Monte Carlo (SMC) baseline: its parent-child edges are
+data-fitted structural priors, not physics. Where the caller supplies
+`constraints` — genuine conservation / mass-balance laws  sum_i w_i x_i <= bound
+in source units, not fitted from data — the generated population is projected
+onto the feasible region with the same hard feasibility projection the PI-VAE
+uses, so those physical laws hold exactly (0% violations). The term
+physics-informed is reserved for the PI-VAE; here the conservation projection is
+an added constraint on a structural baseline. The structural graph, roots and
+constraints are all dataset knowledge supplied by the caller (see src/configs/),
+so the function works unchanged for a different set of features and
+relationships.
 
 **Mcmc** (`src.generators.mcmc_generator.generate`)
 
@@ -126,14 +128,14 @@ that happens.
 **Physics-Informed VAE** (`src.generators.hybrid_vae_generator.generate`)
 
 The physics-informed VAE (PI-VAE): the same generative model as the plain
-VAE, plus a physics-consistency loss that injects the caller-supplied causal
+VAE, plus a physics-consistency loss that injects the caller-supplied structural
 graph into training. It keeps the VAE's data-driven strengths (a learned
 latent joint, novel-individual sampling, no handcrafted marginals) while
-borrowing the physics-informed Monte Carlo generator's domain knowledge: the
-fitted linear-Gaussian relationship on each causal edge.
+borrowing the structural Monte Carlo generator's domain knowledge: the
+fitted linear-Gaussian relationship on each structural edge.
 
 Each (parent, child) edge in `causal_graph` is fit once on the real data
-(slope, intercept, residual variance — the same conditionals the physics-MC
+(slope, intercept, residual variance — the same conditionals the SMC
 generator samples). Those constants become a differentiable penalty (see
 `_physics_loss`), weighted by `physics_weight`, that pushes each batch onto
 the mechanistic relationships while matching their real residual spread, so
@@ -154,7 +156,7 @@ asserts. Set `physics_weight=0.0` to recover the plain VAE.
 A fourth term, weighted by `marginal_weight`, is the per-feature 1D
 Wasserstein distance (see `_marginal_loss`) between samples drawn from the
 prior and the real batch. It shapes every generated feature's whole
-distribution onto real, including the causal-graph root variables that the
+distribution onto real, including the structural-graph root variables that the
 physics term leaves unconstrained; set `marginal_weight=0.0` to disable it.
 
 `prior_type` chooses how latents are drawn at generation and for the
@@ -181,11 +183,11 @@ capacity, collapse, and early-stopping trade-offs.
 
 | Engine | Correlation Distance (Euclidean) | Mean KS Statistic |
 |---|---|---|
-| Physics-Informed Monte Carlo | 1.6928 | 0.1606 |
+| Structural Monte Carlo | 1.6928 | 0.1606 |
 | Mcmc | **0.3655** | **0.0683** |
 | Regression | 0.5819 | 0.1251 |
 | Variational Autoencoder | 0.7584 | 0.2232 |
-| Physics-Informed VAE | 0.3982 | 0.0930 |
+| Physics-Informed VAE | 0.4164 | 0.0930 |
 
 (Lower is better for both metrics; bold = best.)
 
@@ -196,7 +198,7 @@ capacity, collapse, and early-stopping trade-offs.
 
 Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat / higher p_value = closer):
 
-- **Physics-Informed Monte Carlo**: 5/6 features statistically distinguishable from real (p < 0.05)
+- **Structural Monte Carlo**: 5/6 features statistically distinguishable from real (p < 0.05)
 - **Mcmc**: 0/6 features statistically distinguishable from real (p < 0.05)
 - **Regression**: 5/6 features statistically distinguishable from real (p < 0.05)
 - **Variational Autoencoder**: 6/6 features statistically distinguishable from real (p < 0.05)
@@ -206,7 +208,7 @@ Per-feature marginal fit (two-sample KS test, real vs. generated; lower ks_stat 
 
 Lower = closer to real; bold = best per feature.
 
-| Feature | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
+| Feature | Structural Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|
 | SSC | 0.1533 | **0.0269** | 0.1303 | 0.1978 | 0.0938 |
 | Malic | 0.1667 | **0.0922** | 0.1417 | 0.3113 | 0.0934 |
@@ -219,14 +221,14 @@ Lower = closer to real; bold = best per feature.
 
 **Correlation Distance (Euclidean)** is scale-invariant — Pearson correlation ignores absolute spread, so a method can score well on it while its population is uniformly shrunk or stretched relative to real. This shows each engine's per-feature standard deviation as a fraction of real's (1.00 = matches real exactly; well below 1.00 = generated population is narrower than real).
 
-| Feature | Real Std | Physics-Informed Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
+| Feature | Real Std | Structural Monte Carlo | Mcmc | Regression | Variational Autoencoder | Physics-Informed VAE |
 |---|---|---|---|---|---|---|
-| SSC | 0.749 | 0.855 (1.14x) | 0.788 (1.05x) | 0.794 (1.06x) | 0.900 (1.20x) | 0.826 (1.10x) |
+| SSC | 0.749 | 0.855 (1.14x) | 0.788 (1.05x) | 0.794 (1.06x) | 0.900 (1.20x) | 0.828 (1.11x) |
 | Malic | 0.514 | 0.503 (0.98x) | 0.503 (0.98x) | 0.504 (0.98x) | 0.609 (1.18x) | 0.510 (0.99x) |
 | Citric | 2.470 | 2.060 (0.83x) | 1.989 (0.81x) | 2.030 (0.82x) | 2.122 (0.86x) | 2.065 (0.84x) |
 | Glutamic | 0.628 | 0.671 (1.07x) | 0.667 (1.06x) | 0.636 (1.01x) | 0.796 (1.27x) | 0.673 (1.07x) |
 | Fructose | 4.204 | 4.764 (1.13x) | 4.407 (1.05x) | 4.482 (1.07x) | 4.979 (1.18x) | 4.652 (1.11x) |
-| Glucose | 3.870 | 4.487 (1.16x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.332 (1.12x) |
+| Glucose | 3.870 | 4.487 (1.16x) | 4.070 (1.05x) | 4.117 (1.06x) | 4.673 (1.21x) | 4.331 (1.12x) |
 
 ## Generalization Check
 
@@ -234,11 +236,11 @@ Correlation distance for each engine's synthetic data against the train split it
 
 | Engine | Correlation Dist. (vs. Train) | Correlation Dist. (vs. Test) | Gap |
 |---|---|---|---|
-| Physics-Informed Monte Carlo | 1.5823 | 1.6928 | 0.1105 |
+| Structural Monte Carlo | 1.5823 | 1.6928 | 0.1105 |
 | Mcmc | 0.4961 | 0.3655 | 0.1306 |
 | Regression | 0.4597 | 0.5819 | 0.1222 |
 | Variational Autoencoder | 0.5512 | 0.7584 | 0.2073 |
-| Physics-Informed VAE | 0.1380 | 0.3982 | 0.2602 |
+| Physics-Informed VAE | 0.1484 | 0.4164 | 0.2680 |
 
 ## Downstream Utility (TSTR)
 
@@ -247,11 +249,11 @@ Train-on-Synthetic, Test-on-Real for the `Type` label: a RandomForest is trained
 | Trained on | Accuracy | ROC-AUC |
 |---|---|---|
 | **Real (TRTR ceiling)** | 0.7846 | n/a |
-| Physics-Informed Monte Carlo | 0.7333 | n/a |
+| Structural Monte Carlo | 0.7333 | n/a |
 | Mcmc | 0.7590 | n/a |
 | Regression | 0.7744 | n/a |
 | Variational Autoencoder | 0.6923 | n/a |
-| Physics-Informed VAE | 0.7333 | n/a |
+| Physics-Informed VAE | 0.7538 | n/a |
 
 (Higher is better; closer to the Real ceiling = more useful synthetic data.)
 
@@ -261,7 +263,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 
 | Engine | Coverage @ 90% (nominal 0.90) | Calibration Error |
 |---|---|---|
-| Physics-Informed Monte Carlo | 0.942 | 0.0458 |
+| Structural Monte Carlo | 0.942 | 0.0458 |
 | Mcmc | 0.909 | 0.0315 |
 | Regression | 0.906 | **0.0240** |
 | Variational Autoencoder | 0.903 | 0.0476 |
@@ -278,7 +280,7 @@ Tests the *calibrated uncertainty* claim directly. For each feature, the central
 **Correlation matrices**
 
 ![Real correlation matrix](../../results/tomato_nir/figures/correlation/correlation_real.png)
-![Physics-Informed Monte Carlo correlation matrix](../../results/tomato_nir/figures/correlation/correlation_physics_mc.png)
+![Structural Monte Carlo correlation matrix](../../results/tomato_nir/figures/correlation/correlation_physics_mc.png)
 ![Mcmc correlation matrix](../../results/tomato_nir/figures/correlation/correlation_mcmc.png)
 ![Regression correlation matrix](../../results/tomato_nir/figures/correlation/correlation_regression.png)
 ![Variational Autoencoder correlation matrix](../../results/tomato_nir/figures/correlation/correlation_vae.png)
