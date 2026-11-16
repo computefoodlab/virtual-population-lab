@@ -151,6 +151,7 @@ scripts are separate entry points:
 python -m src.multiseed --seeds 41 42 43 44 45 --loro   # fidelity + near/far, mean +/- s.d.
 python -m src.experiments.deep_baselines                # CTGAN / TVAE / MCMC vs PI-VAE (Table S7)
 python -m src.experiments.ablation                      # constraints vs calibration (Table S8)
+python -m src.experiments.citrus_digital_twin           # citrus chilling-injury digital-twin decision (Tables S9-S9d)
 python -m src.experiments.transfer_decision             # data-scarce cultivar transfer (Table S10)
 python -m src.experiments.conformal_calibration         # in-distribution conformal (Table S13)
 python -m src.experiments.drift_detection               # drift monitor (Table S19)
@@ -161,6 +162,20 @@ python -m src.paper_algorithms                          # equations + algorithm
 summary table (best value per metric marked), and rewrites
 `reports/<config_name>/REPORT.md` from that run's numbers and figures. All runs
 are CPU-feasible.
+
+### Reproducibility
+
+All runs are seeded. Headline fidelity uses five seeds (41-45) and transfer runs
+use three (41-43), set via `--seeds` above and the config defaults in
+`src/configs/`. The commands above regenerate every reported table (`src.multiseed`
+for Table 1 / S6, the `src.experiments.*` scripts for the supplementary tables).
+
+The deterministic baselines (single value, bootstrap, GLM, empirical-Bayes,
+shrinkage) reproduce exactly. The generative models (VAE, PI-VAE) are seeded but
+not bit-exact across hardware and library versions, so their values may differ by
+a small numerical tolerance, and rank-test p-values, being sensitive to those
+small shifts, may vary slightly while preserving the reported conclusions.
+Installing the pinned versions in `requirements.txt` gives the closest match.
 
 ### Adding a new dataset
 

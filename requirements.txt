@@ -7,3 +7,4 @@ seaborn==0.13.2
 torch==2.13.0
 scipy==1.18.0
 scipy-stubs==1.18.0.1
+statsmodels==0.15.0
