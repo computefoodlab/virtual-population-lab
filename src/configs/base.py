@@ -115,14 +115,15 @@ VAE_FREE_BITS = 0.0
 # correlations, which the reconstruction+KL ELBO alone doesn't reward.
 VAE_COV_WEIGHT = 1.0
 
-# Weight on the physics-consistency loss term, used only by the
-# physics-informed VAE (hybrid_vae_generator). Penalizes reconstructed
-# batches that violate the fitted linear-Gaussian relationship on each
-# CAUSAL_GRAPH edge — matching its slope, intercept, and real residual
-# spread — so the VAE is pushed onto the same fitted conditionals the
-# structural Monte Carlo generator samples, without collapsing feature
-# variance. Set to
-# 0.0 to make the physics-informed VAE behave identically to the plain VAE.
+# Weight on the OPTIONAL data-fitted edge-consistency term (hybrid_vae_generator).
+# When > 0 it penalizes reconstructed batches that violate the fitted
+# linear-Gaussian relationship on each CAUSAL_GRAPH edge, the same fitted
+# conditionals the structural Monte Carlo baseline samples. Because those edges
+# are fitted to data, the paper does NOT treat them as physics: this term is
+# DISABLED (0.0) in every dataset config. The PI-VAE's actual physics is the
+# conservation law (see CONSTRAINTS / CONSTRAINT_WEIGHT), imposed as a soft
+# penalty plus a hard feasibility projection at generation, while the remaining
+# feature dependence is learned by the covariance term. Kept only as an ablation.
 VAE_PHYSICS_WEIGHT = 0.0
 
 # Weight on the marginal-matching loss term, used only by the

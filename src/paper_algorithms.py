@@ -63,13 +63,16 @@ q_\phi(z\mid x) &= \mathcal{N}\!\big(\mu_\phi(x),\,\mathrm{diag}\,\sigma^2_\phi(
 \end{align}
 Generation draws $z\sim\mathcal{N}(0,I)$ and returns $\tilde{x}=g_\theta(z)$.
 
-\paragraph{Physics-VAE (proposed).} The VAE above augmented with a physics-consistency
-term on the fitted structural edges and a marginal-matching term, followed by an
-empirical-copula calibration step:
+\paragraph{Physics-VAE (proposed).} The VAE above augmented, where a genuine
+conservation law holds, with a conservation-penalty term and a marginal-matching
+term, followed by a hard feasibility projection at generation and an
+empirical-copula calibration step. The data-fitted edge term is disabled, so the
+imposed physics is the conservation law while the remaining feature dependence is
+learned by the covariance term:
 \begin{equation}
 \mathcal{L}=\mathcal{L}_{\mathrm{rec}}+\beta(t)\,\mathcal{L}_{\mathrm{KL}}
 +\lambda_{\mathrm{cov}}\mathcal{L}_{\mathrm{cov}}
-+\lambda_{\mathrm{phys}}\mathcal{L}_{\mathrm{phys}}
++\lambda_{\mathrm{cons}}\mathcal{L}_{\mathrm{cons}}
 +\lambda_{\mathrm{marg}}\mathcal{L}_{\mathrm{marg}}.
 \end{equation}
 Each term's definition and weight are given in Table~\ref{tab:loss}; the full
@@ -102,9 +105,9 @@ L_VAE = ‖x − x̂‖² + β·KL(q_φ‖N(0,I)) + λ_cov·‖Cov(X̃) − Cov(
 generate:  z ~ N(0,I) → x̃ = g_θ(z)
 ```
 
-**Physics-VAE (proposed)** — VAE + physics + marginal terms + copula calibration:
+**Physics-VAE (proposed)** — VAE + conservation + marginal terms + feasibility projection + copula calibration (edge term disabled; physics = conservation, dependence learned by covariance):
 ```
-L = L_rec + β(t)·L_KL + λ_cov·L_cov + λ_phys·L_phys + λ_marg·L_marg
+L = L_rec + β(t)·L_KL + λ_cov·L_cov + λ_cons·L_cons + λ_marg·L_marg
 ```
 Term definitions/weights: loss_terms.md; full procedure: physicsvae_algorithm.md.
 """
@@ -116,15 +119,11 @@ ALG_TEX = r"""% Full Physics-VAE training + generation (Supplementary).
 \caption{Physics-VAE: training and virtual-population generation}
 \label{alg:physvae}
 \begin{algorithmic}[1]
-\Require training matrix $X\in\mathbb{R}^{n\times D}$; structural edges $E$; weights
-$\lambda_{\mathrm{cov}},\lambda_{\mathrm{phys}},\lambda_{\mathrm{marg}},\beta$;
+\Require training matrix $X\in\mathbb{R}^{n\times D}$; conservation constraints
+$Ax\le b$ (where a governing law holds); weights
+$\lambda_{\mathrm{cov}},\lambda_{\mathrm{cons}},\lambda_{\mathrm{marg}},\beta$;
 free-bits $c$; epochs $T$; latent dim $d_z$; population size $N$
 \State Fit scaler on $X$ (\textbf{training data only}); standardize $X$
-\For{each edge $(p\!\to\!c)\in E$} \Comment{physics constants, fit once on $X$}
-  \State $\beta_{pc}\gets \mathrm{Cov}(x_p,x_c)/\mathrm{Var}(x_p)$;\ \
-         $\alpha_{pc}\gets \bar{x}_c-\beta_{pc}\bar{x}_p$;\ \
-         $\sigma^2_{pc}\gets \mathrm{Var}\!\big(x_c-(\beta_{pc}x_p+\alpha_{pc})\big)$
-\EndFor
 \State initialize encoder $\phi$, decoder $\theta$
 \For{$t=1$ to $T$}
   \State $\beta(t)\gets \beta\cdot\min\!\big(1,\ t/(0.3T)\big)$ \Comment{KL warm-up}
@@ -135,22 +134,20 @@ free-bits $c$; epochs $T$; latent dim $d_z$; population size $N$
   \State $\mathcal{L}_{\mathrm{rec}}\gets \tfrac{1}{nD}\lVert \hat{X}-X\rVert^2$
   \State $\mathcal{L}_{\mathrm{KL}}\gets \tfrac{1}{n}\sum_i\sum_j \max\!\big(\tfrac12(\mu_{ij}^2+e^{s_{ij}}-1-s_{ij}),\,c\big)$
   \State $\mathcal{L}_{\mathrm{cov}}\gets \tfrac{1}{D^2}\lVert \mathrm{Cov}(\tilde{X})-\mathrm{Cov}(X)\rVert_F^2$
-  \For{each edge $(p\!\to\!c)\in E$} \Comment{on generated $\tilde{X}$; $r=\tilde{x}_c-(\beta_{pc}\tilde{x}_p+\alpha_{pc})$}
-    \State accumulate $\bar{r}^2+\mathrm{Cov}(r,\tilde{x}_p)^2+(\mathrm{Var}(r)-\sigma^2_{pc})^2$
-  \EndFor
-  \State $\mathcal{L}_{\mathrm{phys}}\gets \tfrac{1}{|E|}\sum_{\text{edges}}(\cdots)$
+  \State $\mathcal{L}_{\mathrm{cons}}\gets \tfrac{1}{n}\sum_i \big\lVert \mathrm{ReLU}\!\big(A\,\tilde{x}^{\mathrm{raw}}_i-b\big)\big\rVert^2$ \Comment{squared conservation violation (source units); $0$ where no law}
   \State $\mathcal{L}_{\mathrm{marg}}\gets \tfrac{1}{nD}\sum_j\sum_k\big(\tilde{x}_{(k)j}-x_{(k)j}\big)^2$ \Comment{sorted per feature}
   \State $\mathcal{L}\gets \mathcal{L}_{\mathrm{rec}}+\beta(t)\mathcal{L}_{\mathrm{KL}}
           +\lambda_{\mathrm{cov}}\mathcal{L}_{\mathrm{cov}}
-          +\lambda_{\mathrm{phys}}\mathcal{L}_{\mathrm{phys}}
+          +\lambda_{\mathrm{cons}}\mathcal{L}_{\mathrm{cons}}
           +\lambda_{\mathrm{marg}}\mathcal{L}_{\mathrm{marg}}$
   \State $(\phi,\theta)\gets \mathrm{Adam}\ \text{step on}\ \nabla_{\phi,\theta}\mathcal{L}$;\ \ early-stop on plateau
 \EndFor
 \State $Z'\sim\mathcal{N}(0,I)^{N\times d_z}$;\ \ $\tilde{X}\gets \mathrm{Dec}_\theta(Z')$ \Comment{generate population}
+\State inverse-transform $\tilde{X}$ with the training scaler \Comment{to source units}
 \For{each feature $j$} \Comment{empirical-copula calibration onto real training marginal}
   \State $\tilde{X}_{\cdot j}\gets \widehat{Q}^{\,\mathrm{real}}_j\!\big((\mathrm{rank}(\tilde{X}_{\cdot j})-\tfrac12)/N\big)$
 \EndFor
-\State inverse-transform $\tilde{X}$ with the training scaler
+\State project $\tilde{X}$ onto $\{x:\,Ax\le b\}$ by cyclic Euclidean projection \Comment{hard feasibility: 0\% violations}
 \State \Return $\tilde{X}$
 \end{algorithmic}
 \end{algorithm}
@@ -158,15 +155,12 @@ free-bits $c$; epochs $T$; latent dim $d_z$; population size $N$
 
 ALG_MD = r"""## Physics-VAE algorithm — training + generation (Supplementary)
 
-Inputs: training matrix X (n×D); structural edges E; weights λ_cov, λ_phys, λ_marg, β; free-bits c; epochs T; latent dim d_z; population size N.
+Inputs: training matrix X (n×D); conservation constraints Ax ≤ b (where a governing law holds); weights λ_cov, λ_cons, λ_marg, β; free-bits c; epochs T; latent dim d_z; population size N.
 
 ```
 1.  Fit scaler on X (TRAINING DATA ONLY); standardize X.
-2.  For each edge (p→c) in E  — physics constants, fit once on X:
-        β_pc = Cov(x_p,x_c)/Var(x_p);  α_pc = mean(x_c) − β_pc·mean(x_p)
-        σ²_pc = Var( x_c − (β_pc·x_p + α_pc) )
-3.  Initialize encoder φ, decoder θ.
-4.  for t = 1..T:
+2.  Initialize encoder φ, decoder θ.
+3.  for t = 1..T:
       β(t) = β·min(1, t/(0.3T))                         # KL warm-up
       (μ, s) = Enc_φ(X);  s = clamp(s, −8, 8)           # s = logσ²
       Z  = μ + exp(s/2)⊙ε,  ε ~ N(0,I)                  # reparameterize (encode→sample)
@@ -174,21 +168,26 @@ Inputs: training matrix X (n×D); structural edges E; weights λ_cov, λ_phys, �
       Z' ~ N(0,I)^{n×d_z};  X̃ = Dec_θ(Z')               # generated batch
       L_rec  = mean‖X̂ − X‖²
       L_KL   = mean_i Σ_j max( ½(μ² + e^s − 1 − s), c )
-      L_cov  = (1/D²)‖Cov(X̃) − Cov(X)‖²_F               # on generated X̃
-      L_phys = (1/|E|) Σ_(p→c) [ r̄² + Cov(r,x̃_p)² + (Var(r) − σ²_pc)² ],  r = x̃_c − (β_pc·x̃_p + α_pc)
+      L_cov  = (1/D²)‖Cov(X̃) − Cov(X)‖²_F               # on generated X̃; learns joint dependence
+      L_cons = (1/n) Σ_i ‖ReLU( A·x̃ᵢ^raw − b )‖²         # conservation violation (source units); 0 where no law
       L_marg = (1/nD) Σ_j Σ_k ( x̃_(k)j − x_(k)j )²       # sorted order statistics per feature
-      L = L_rec + β(t)·L_KL + λ_cov·L_cov + λ_phys·L_phys + λ_marg·L_marg
+      L = L_rec + β(t)·L_KL + λ_cov·L_cov + λ_cons·L_cons + λ_marg·L_marg
       Adam step on ∇_{φ,θ} L;  early-stop on plateau     # backprop
-5.  Generate: Z' ~ N(0,I)^{N×d_z};  X̃ = Dec_θ(Z').
+4.  Generate: Z' ~ N(0,I)^{N×d_z};  X̃ = Dec_θ(Z').
+5.  Inverse-transform X̃ with the training scaler (to source units).
 6.  Copula calibration — for each feature j:
         X̃_·j ← Q̂_j^real( (rank(X̃_·j) − ½) / N )         # map onto real training marginal
-7.  Inverse-transform X̃ with the training scaler.  Return X̃.
+7.  Conservation projection — project X̃ onto { x : A·x ≤ b } by cyclic Euclidean
+        projection (0% violations).  Return X̃.
 ```
 
-Notes: the covariance and physics terms are evaluated on the freshly generated batch X̃
-(`constrain_generated=True`), so they shape the population actually sampled at generation.
-All priors, edge constants, scaler, and calibration reference come exclusively from X (the
-training split). Set λ_phys = 0 to recover a calibrated VAE; empty E ⇒ L_phys = 0.
+Notes: the covariance and conservation terms are evaluated on the freshly generated batch X̃
+(`constrain_generated=True`), so they shape the population actually sampled at generation. The
+conservation law is the only imposed physics: a soft penalty during training plus an exact
+feasibility projection at generation, applied where a governing law exists (citrus, safou, tomato).
+The data-fitted edge term is disabled (λ_phys = 0). All priors, constraints, scaler, and calibration
+reference come exclusively from X (the training split). Set λ_cons = 0 (no law) to recover a
+calibrated VAE.
 """
 
 STANDALONE = r"""% Compilable check for the paper algorithms/equations.

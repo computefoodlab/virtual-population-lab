@@ -83,8 +83,8 @@ chilling-injury, colour and moisture-loss kinetics.
 |---|---|
 | Multiseed fidelity (Table S6) | 5 (41–45), mean ± s.d. |
 | TSTR (Table S11) | 5 (41–45), random forest 200 trees |
-| Digital twin (Tables S9/S10) | 3 (41–43), leave-one-condition-out |
-| Transfer decision | 15 |
+| Digital twin (Tables S9–S9d) | 3 (41–43), leave-one-condition-out |
+| Transfer decision (Table S10) | 15 |
 
 Epistemic-uncertainty / off-support detection uses the 5-model seed ensemble
 (near/far disagreement).

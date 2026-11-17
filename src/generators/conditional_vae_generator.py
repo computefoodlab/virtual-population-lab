@@ -51,13 +51,16 @@ def train(x, cond, latent_dim, epochs, beta=1.0, hidden_dim=128, free_bits=0.0,
     a free-bits floor) plus a covariance-matching term, matching the
     conventions of the other VAE engines. Returns the trained model.
 
-    If `physics_weight > 0`, a structural-graph physics-consistency term is added
-    (identical to the physics-informed VAE's): each edge's linear-Gaussian conditional
-    is fit once on the training rows `x` (the seen conditions), then penalized on
-    the reconstructions. The assumption — and what the transfer experiment tests
-    — is that the fitted law is universal across conditions, so anchoring the
-    decoder to it should carry the correct structure to an unseen condition.
-    `features` and `causal_graph` must be given when physics_weight > 0.
+    `physics_weight` defaults to 0, so by default this is a plain conditional VAE
+    (reconstruction + beta-annealed KL + covariance matching). If
+    `physics_weight > 0`, an OPTIONAL data-fitted edge-consistency term is added:
+    each edge's linear-Gaussian conditional is fit once on the training rows `x`
+    and penalized on the reconstructions. Because those edges are fitted to data
+    the paper does not treat them as physics, and no reported experiment enables
+    this term (the citrus digital-twin and cultivar-transfer runs use
+    `mechanistic_cvae`, whose mechanistic terms are the conservation law and the
+    published kinetics, not fitted edges). `features` and `causal_graph` must be
+    given when physics_weight > 0.
     """
     torch.manual_seed(seed)
     x_t, c_t = torch.FloatTensor(x), torch.FloatTensor(cond)
