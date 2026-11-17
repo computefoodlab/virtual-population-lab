@@ -128,19 +128,25 @@ that happens.
 **Physics-Informed VAE** (`src.generators.hybrid_vae_generator.generate`)
 
 The physics-informed VAE (PI-VAE): the same generative model as the plain
-VAE, plus a physics-consistency loss that injects the caller-supplied structural
-graph into training. It keeps the VAE's data-driven strengths (a learned
-latent joint, novel-individual sampling, no handcrafted marginals) while
-borrowing the structural Monte Carlo generator's domain knowledge: the
-fitted linear-Gaussian relationship on each structural edge.
+VAE, with its physics supplied by two mechanisms that do not rely on fitted
+parent-child edges. Where a genuine conservation / mass-balance law holds for
+the commodity (passed as `constraints`, for example rind dry <= rind fresh),
+that law is imposed as a soft penalty during training (`constraint_weight`)
+and enforced exactly by a hard feasibility projection at generation (see
+`_project_constraints`), so the returned population satisfies it with 0%
+violations. The feature-to-feature dependence for which no physical law exists
+is learned directly from data by the covariance-matching term (`cov_weight`),
+not imposed as a structural edge.
 
-Each (parent, child) edge in `causal_graph` is fit once on the real data
-(slope, intercept, residual variance — the same conditionals the SMC
-generator samples). Those constants become a differentiable penalty (see
-`_physics_loss`), weighted by `physics_weight`, that pushes each batch onto
-the mechanistic relationships while matching their real residual spread, so
-the constraint guides the generative manifold toward physically consistent
-samples without re-introducing variance shrinkage.
+The data-fitted parent-child edge term is therefore off by default
+(`physics_weight=0.0`, which every dataset config sets via
+`VAE_PHYSICS_WEIGHT`). It is retained only as an optional ablation: setting
+`physics_weight > 0` adds a differentiable penalty (see `_physics_loss`) that
+pushes each batch onto the linear-Gaussian conditional fitted on each
+`causal_graph` edge, the same conditionals the structural Monte Carlo baseline
+samples. Because those edges are fitted to the data, the paper does not count
+them as physics and reserves "physics" / "mechanistic" for the conservation
+law (and, in the conditional variant, the published citrus kinetics).
 
 Trains on `x` (expected already reasonably scaled) and samples `n_samples`
 rows from the prior; pass a fitted `scaler` only if `x` needs
@@ -148,26 +154,27 @@ inverse-transforming back to source units. Loss is the standard VAE ELBO
 (reconstruction MSE + analytic KL to the standard-normal prior, `beta`
 linearly annealed from 0 over the first `kl_warmup_frac` of training to avoid
 posterior collapse), plus a covariance-matching term (`cov_weight`) that
-rewards preserving the full correlation matrix, plus the physics term
-(`physics_weight`). `cov_weight` shapes the whole covariance structure from
-data; `physics_weight` anchors the specific mechanistic edges an expert
-asserts. Set `physics_weight=0.0` to recover the plain VAE.
+rewards preserving the full correlation matrix, plus, where a law is supplied,
+the conservation penalty (`constraint_weight`), and optionally the marginal
+(`marginal_weight`) and edge (`physics_weight`) terms. `cov_weight` shapes the
+whole covariance structure from data. Set the extra weights to 0 to recover
+the plain VAE.
 
-A fourth term, weighted by `marginal_weight`, is the per-feature 1D
-Wasserstein distance (see `_marginal_loss`) between samples drawn from the
-prior and the real batch. It shapes every generated feature's whole
-distribution onto real, including the structural-graph root variables that the
-physics term leaves unconstrained; set `marginal_weight=0.0` to disable it.
+A term weighted by `marginal_weight` is the per-feature 1D Wasserstein
+distance (see `_marginal_loss`) between samples drawn from the prior and the
+real batch. It shapes every generated feature's whole distribution onto real,
+including the root variables the other terms leave unconstrained; set
+`marginal_weight=0.0` to disable it.
 
 `prior_type` chooses how latents are drawn at generation and for the
 generated-sample loss terms: "standard" samples the N(0, I) prior,
 "aggregate" samples the aggregate posterior over the training rows (see
 `_decode_samples`).
 
-`constrain_generated` routes the covariance and physics terms onto a batch of
-freshly generated rows instead of the reconstructions, so those constraints
-shape the population actually sampled at generation. The default (False)
-keeps them on reconstructions, matching the plain VAE's convention.
+`constrain_generated` routes the covariance and (if enabled) edge terms onto a
+batch of freshly generated rows instead of the reconstructions, so those terms
+shape the population actually sampled at generation. The default (False) keeps
+them on reconstructions, matching the plain VAE's convention.
 
 `calibrate_marginals` applies the empirical-copula post-step (see
 `_calibrate_marginals`): each feature is mapped onto the real training

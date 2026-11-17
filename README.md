@@ -42,7 +42,7 @@ abbreviations as follows:
 
 2. **Gaussian-copula Monte Carlo (MCMC)** — the domain prior art for virtual
    food populations: correlated, non-Gaussian parameters are drawn by
-   Monte-Carlo sampling from a fitted Gaussian copula (empirical marginals mapped
+   Gibbs sampling (a Markov chain) over a fitted Gaussian copula (empirical marginals mapped
    through a rank-correlation matrix), reproducing marginals and linear rank
    dependence without a neural network.
 

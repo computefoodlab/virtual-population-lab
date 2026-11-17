@@ -52,7 +52,7 @@ OUT = "results/_summary"
 DEFAULT_CONFIGS = ["citrus_exp6", "tomato_nir", "grape_berry", "apple_samnegard",
                    "mango_composition", "biofood_safou_region"]
 DATASET_LABEL = {
-    "citrus_exp6": "Citrus (oranges)",
+    "citrus_exp6": "Citrus",
     "tomato_nir": "Tomato",
     "grape_berry": "Grape berry",
     "apple_samnegard": "Apple",
